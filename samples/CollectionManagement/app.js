@@ -15,10 +15,10 @@ const databaseId = config.names.database
 const collectionId = config.names.collection
 
 var host = config.connection.endpoint;
-var masterkey = config.connection.authKey;
+var masterKey = config.connection.authKey;
 
 // Establish a new instance of the DocumentDBClient to be used throughout this demo
-var client = new CosmosClient({ endpoint: host, auth: { masterkey } });
+var client = new CosmosClient({ endpoint: host, auth: { masterKey } });
 
 //---------------------------------------------------------------------------------
 // This demo performs a few steps
@@ -36,14 +36,15 @@ async function run() {
     await init(databaseId);
 
     //1.
-    console.log('1. createCollection ith id \'' + collectionId + '\'');
+    console.log('1. createCollection with id \'' + collectionId + '\'');
     await database.containers.create({id: collectionId});
 
     //2.
     console.log('\n2. listCollections in database');
     const iterator = database.containers.read();
-    for (const {result} of await iterator.forEach()) {
-        console.log(result.id);
+    const {result: containers} = await iterator.toArray();
+    for (const c of containers) {
+        console.log(c.id);
     }
 
     //3.
@@ -78,10 +79,10 @@ async function init(databaseId) {
         var databaseDef = { id: databaseId };
 
         const { result: newDB } = await client.databases.create(databaseDef);
-        client.databases.getDatabase(newDB.id);
+        database = client.databases.getDatabase(newDB.id);
         //database found, return it
     } else {
-        client.databases.getDatabase(results[0].id);
+        database = client.databases.getDatabase(results[0].id);
     }
 }
 
