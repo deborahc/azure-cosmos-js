@@ -35,6 +35,18 @@
             "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceFolder}/samples/TodoApp/bin/www"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "User Study: Setup",
+            "program": "${workspaceFolder}/samples/UserStudy/TodoSetup.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "User Study: CLI",
+            "program": "${workspaceFolder}/samples/UserStudy/TodoCLI.js"
         }
     ]
 }

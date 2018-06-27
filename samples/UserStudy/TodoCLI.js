@@ -13,36 +13,17 @@ const client = new CosmosClient({ endpoint: host, auth: { masterKey } });
 
 var program = require('commander');
 
-/** TASK 1: Implement a function to add a new todo-item to the container in the database **/
+/** TASK 1: TODO: Implement a function to add a new todo-item to the container in the database **/
 
 async function addToDoItem(category, description) {
-    try {
-        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
-        console.log("Adding task with category: " + category + " and description: " + description);
-        const item = { "category": category, "description": description };
-        container.items.create(item);
-    } catch (error) {
-        /** @type{cosmos.ErrorResponse} */
-        const err = error;
-    }
+
 }
 
-/** TASK 2: Implement a function to list all todo-items in the container in the database **/
+/** TASK 2: TODO: Implement a function to list all todo-items in the container in the database **/
 
 async function queryAllToDoItems() {
-    try {
-        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
-        const { result: items } = await container.items.read().toArray();
-        for (let item of items) {
-            console.log(item.category, item.description);
-        }
-    } catch (error) {
-        /** @type{cosmos.ErrorResponse} */
-        const err = error;
-    }
-}
 
-/** TASK 2: Implement a function to list all todo-items in the container in the database **/
+}
 
 async function handleError(error) {
     console.log('\nAn error with code \'' + error.code + '\' has occurred:');
