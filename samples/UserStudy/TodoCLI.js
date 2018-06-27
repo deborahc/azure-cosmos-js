@@ -1,31 +1,68 @@
 #!/usr/bin/env node
+const cosmos = require('../../lib/');
+const config = require('../Shared/config')
+
+const host = config.connection.endpoint;
+const masterKey = config.connection.authKey;
+
+const CosmosClient = cosmos.CosmosClient;
+const databaseId = 'UserStudy_TodoDB'
+const containerId = 'UserStudy_TodoContainer'
+
+const client = new CosmosClient({ endpoint: host, auth: { masterKey } });
 
 var program = require('commander');
 
-//QueryAllToDoItems make it a function. 
-//Future: do a simple query, (write out the sql)
-//Add and mark as completed - 
+/** TASK 1: Implement a function to add a new todo-item to the container in the database **/
 
-program
-    .command('list') // sub-command name
-    .description('List all todo-items') // command description
+async function addToDoItem(category, description) {
+    try {
+        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
+        console.log("Adding task with category: " + category + " and description: " + description);
+        const item = { "category": category, "description": description };
+        container.items.create(item);
+    } catch (error) {
+        /** @type{cosmos.ErrorResponse} */
+        const err = error;
+    }
+}
 
-    // function to execute when command is uses
-    .action(function () {
-        //TASK: Query database / container for all todo items and list them. 
-    });
+/** TASK 2: Implement a function to list all todo-items in the container in the database **/
 
-//dech-todo: move this first
+async function queryAllToDoItems() {
+    try {
+        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
+        const { result: items } = await container.items.read().toArray();
+        for (let item of items) {
+            console.log(item.category, item.description);
+        }
+    } catch (error) {
+        /** @type{cosmos.ErrorResponse} */
+        const err = error;
+    }
+}
+
+/** TASK 2: Implement a function to list all todo-items in the container in the database **/
+
+async function handleError(error) {
+    console.log('\nAn error with code \'' + error.code + '\' has occurred:');
+    console.log('\t' + JSON.parse(error.body).message);
+}
+
+// To run: node .\TodoCLI.js add <category> <description>
 program
     .command('add <category> <description>')
     .description('Add a todo-item with category and description')
     .action(function (category, description, args) {
-        console.log("Adding task with category: "+ category + " and description: " + description);
-
-        //TASK: Add the new todo-item to the database
+        addToDoItem(category, description).catch(handleError);
     });
 
-// allow commander to parse `process.argv`
-program.parse(process.argv);
+// To run: .\TodoCLI.js list
+program
+    .command('list') 
+    .description('List all todo-items')
+    .action(function (args) {
+        queryAllToDoItems().catch(handleError);
+    });
 
-//TO RUN, go to Terminal, and type: node .\TodoCLI.js add categoryText descriptionText
+program.parse(process.argv);
