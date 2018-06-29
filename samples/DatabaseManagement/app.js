@@ -14,11 +14,11 @@ const CosmosClient = cosmos.CosmosClient;
 const config = require('../Shared/config')
 const databaseId = config.names.database
   
-const host = config.connection.endpoint;
-const masterkey = config.connection.authKey;
+const endpoint = config.connection.endpoint;
+const masterKey = config.connection.authKey;
 
 // Establish a new instance of the DocumentDBClient to be used throughout this demo
-const client = new CosmosClient({endpoint: host, auth: { masterkey }});
+const client = new CosmosClient({endpoint, auth: { masterKey }});
 
 //---------------------------------------------------------------------------------------------------
 // This demo performs the following CRUD operations on a Database
@@ -37,8 +37,8 @@ async function run() {
         // 1.
         try {
             console.log('1. findDatabaseById \'' + databaseId + '\'');
-            const {result: db} = await client.databases.getDatabase(databaseId).read();
-            await client.databases.getDatabase(databaseId).delete();
+            const {result: db} = await client.databases.get(databaseId).read();
+            await client.databases.get(databaseId).delete();
         } catch(err) {
             if(err.code === 404) {
                 //no database found, let's go ahead with sample
@@ -55,18 +55,18 @@ async function run() {
     
         // 3.
         console.log('\n3. listDatabases');
-        for (const {db} of await client.databases.read().forEach()) {
+        for (const {db} of await client.databases.readAll().forEach()) {
             console.log(db.id);
         }
     
         // 4.
         console.log('\n5. readDatabase - with id \'' + databaseId + '\'');
-        const {result: db} = await client.databases.getDatabase(databaseId).read();
+        const {result: db} = await client.databases.get(databaseId).read();
         console.log('Database with uri of \'dbs/' + db.id + '\' was found');
     
         // 5.
         console.log('\n6. deleteDatabase with id \'' + databaseId + '\'');
-        await client.databases.getDatabase(databaseId).delete();
+        await client.databases.get(databaseId).delete();
     } catch (err) {
         throw err;
     }

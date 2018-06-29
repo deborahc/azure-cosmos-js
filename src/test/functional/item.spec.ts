@@ -29,14 +29,14 @@ describe("NodeJS CRUD Tests", function () {
                 const client = new CosmosClient({ endpoint, auth: { masterKey } });
                 // create database
                 const { result: dbdef } = await client.databases.create({ id: "sample 中文 database" });
-                const db: Database = client.databases.getDatabase(dbdef.id);
+                const db: Database = client.databases.get(dbdef.id);
                 // create container
                 const { result: containerdef } =
                     await db.containers.create({ id: "sample container" });
-                const container: Container = db.containers.getContainer(containerdef.id);
+                const container: Container = db.containers.get(containerdef.id);
 
                 // read items
-                const { result: items } = await container.items.read().toArray();
+                const { result: items } = await container.items.readAll().toArray();
                 assert(Array.isArray(items), "Value should be an array");
 
                 // create an item
@@ -59,7 +59,7 @@ describe("NodeJS CRUD Tests", function () {
                 assert.equal(document.name, itemDefinition.name);
                 assert(document.id !== undefined);
                 // read documents after creation
-                const { result: documents2 } = await container.items.read().toArray();
+                const { result: documents2 } = await container.items.readAll().toArray();
                 assert.equal(documents2.length, beforeCreateDocumentsCount + 1,
                     "create should increase the number of documents");
                 // query documents
@@ -87,14 +87,14 @@ describe("NodeJS CRUD Tests", function () {
                 assert.equal(replacedDocument.foo, "not bar", "property should have changed");
                 assert.equal(document.id, replacedDocument.id, "document id should stay the same");
                 // read document
-                const { result: document2 } = await container.items.getItem(replacedDocument.id).read();
+                const { result: document2 } = await container.items.get(replacedDocument.id).read();
                 assert.equal(replacedDocument.id, document.id);
                 // delete document
-                const { result: res } = await container.items.getItem(replacedDocument.id).delete();
+                const { result: res } = await container.items.get(replacedDocument.id).delete();
 
                 // read documents after deletion
                 try {
-                    const { result: document3 } = await container.items.getItem(replacedDocument.id).read();
+                    const { result: document3 } = await container.items.get(replacedDocument.id).read();
                     assert.fail("must throw if document doesn't exist");
                 } catch (err) {
                     const notFoundErrorCode = 404;
@@ -105,12 +105,12 @@ describe("NodeJS CRUD Tests", function () {
             }
         };
 
-        const documentCRUDMultiplePartitionsTest = async function (isNameBased: boolean) {
+        const documentCRUDMultiplePartitionsTest = async function () {
             try {
                 const client = new CosmosClient({endpoint, auth: { masterKey }});
                 // create database
                 const { result: dbdef } = await client.databases.create({ id: "db1" });
-                const db = client.databases.getDatabase(dbdef.id);
+                const db = client.databases.get(dbdef.id);
                 const partitionKey = "key";
 
                 // create collection
@@ -121,7 +121,7 @@ describe("NodeJS CRUD Tests", function () {
 
                 const { result: containerdef } =
                     await db.containers.create(collectionDefinition, { offerThroughput: 12000 });
-                const container = db.containers.getContainer(containerdef.id);
+                const container = db.containers.get(containerdef.id);
 
                 const documents = [
                     { id: "document1" },
@@ -140,7 +140,7 @@ describe("NodeJS CRUD Tests", function () {
                     return doc1.id.localeCompare(doc2.id);
                 });
                 await TestHelpers.bulkReadItems(container, returnedDocuments, partitionKey);
-                const { result: successDocuments } = await container.items.read().toArray();
+                const { result: successDocuments } = await container.items.readAll().toArray();
                 assert(successDocuments !== undefined, "error reading documents");
                 assert.equal(successDocuments.length, returnedDocuments.length,
                     "Expected " + returnedDocuments.length + " documents to be succesfully read");
@@ -200,22 +200,8 @@ describe("NodeJS CRUD Tests", function () {
             }
         });
 
-        it("nativeApi Should do document CRUD operations over multiple partitions successfully name based",
-            async function () {
-                try {
-                    await documentCRUDMultiplePartitionsTest(true);
-                } catch (err) {
-                    throw err;
-                }
-            });
-
-        it("nativeApi Should do document CRUD operations over multiple partitions successfully rid based",
-            async function () {
-                try {
-                    await documentCRUDMultiplePartitionsTest(false);
-                } catch (err) {
-                    throw err;
-                }
-            });
+        it("nativeApi Should do document CRUD operations over multiple partitions", async function () {
+            await documentCRUDMultiplePartitionsTest();
+        });
     });
 });

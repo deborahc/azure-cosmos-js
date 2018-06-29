@@ -60,16 +60,16 @@ describe("NodeJS CRUD Tests", function () {
 
         it("nativeApi Validate container and Item TTL values.", async function () {
             try {
-                const { result: db } = await client.databases.create({ id: "sample database" });
+                const { result: db } = await client.databases.create({ id: "ttl test1 database" });
 
                 const containerDefinition = {
                     id: "sample container1",
                     defaultTtl: 5,
                 };
-                const database = await client.databases.getDatabase(db.id);
+                const database = await client.databases.get(db.id);
                 const { result: containerResult } = await database.containers.create(containerDefinition);
                 assert.equal(containerDefinition.defaultTtl, containerResult.defaultTtl);
-                const container = database.containers.getContainer(containerResult.id);
+                const container = database.containers.get(containerResult.id);
 
                 // null, 0, -10 are unsupported value for defaultTtl.Valid values are -1 or a non-zero positive 32-bit integer value
                 await createcontainerWithInvalidDefaultTtl(database, containerDefinition, "sample container2", null);
@@ -94,7 +94,7 @@ describe("NodeJS CRUD Tests", function () {
 
         async function checkItemGone(container: Container, createdItem: any) {
             try {
-                await container.items.getItem(createdItem.id).read();
+                await container.items.get(createdItem.id).read();
                 assert.fail("Must throw if the Item isn't there");
             } catch (err) {
                 const badRequestErrorCode = 404;
@@ -103,7 +103,7 @@ describe("NodeJS CRUD Tests", function () {
         }
 
         async function checkItemExists(container: Container, createdItem: any) {
-            const { result: readItem } = await container.items.getItem(createdItem.id).read();
+            const { result: readItem } = await container.items.get(createdItem.id).read();
             assert.equal(readItem.ttl, createdItem.ttl);
         }
 
@@ -150,16 +150,16 @@ describe("NodeJS CRUD Tests", function () {
         }
 
         it("nativeApi Validate Item TTL with positive defaultTtl.", async function () {
-            const { result: db } = await client.databases.create({ id: "sample database" });
+            const { result: db } = await client.databases.create({ id: "ttl test2 database" });
 
             const containerDefinition = {
                 id: "sample container",
                 defaultTtl: 5,
             };
 
-            const { result: containerResult } = await client.databases.getDatabase(db.id).containers.create(containerDefinition);
+            const { result: containerResult } = await client.databases.get(db.id).containers.create(containerDefinition);
 
-            const container = await client.databases.getDatabase(db.id).containers.getContainer(containerResult.id);
+            const container = await client.databases.get(db.id).containers.get(containerResult.id);
 
             const itemDefinition = {
                 id: "doc1",
@@ -177,24 +177,24 @@ describe("NodeJS CRUD Tests", function () {
             await checkItemGone(container, createdItem3);
 
             // The Items with id doc1 and doc2 will never expire
-            const { result: readItem1 } = await container.items.getItem(createdItem1.id).read();
+            const { result: readItem1 } = await container.items.get(createdItem1.id).read();
             assert.equal(readItem1.id, createdItem1.id);
 
-            const { result: readItem2 } = await container.items.getItem(createdItem2.id).read();
+            const { result: readItem2 } = await container.items.get(createdItem2.id).read();
             assert.equal(readItem2.id, createdItem2.id);
         }
 
         it("nativeApi Validate Item TTL with -1 defaultTtl.", async function () {
-            const { result: db } = await client.databases.create({ id: "sample database" });
+            const { result: db } = await client.databases.create({ id: "ttl test2 database" });
 
             const containerDefinition = {
                 id: "sample container",
                 defaultTtl: -1,
             };
 
-            const { result: createdContainer } = await client.databases.getDatabase(db.id).containers.create(containerDefinition);
+            const { result: createdContainer } = await client.databases.get(db.id).containers.create(containerDefinition);
 
-            const container = await client.databases.getDatabase(db.id).containers.getContainer(createdContainer.id);
+            const container = await client.databases.get(db.id).containers.get(createdContainer.id);
 
             const itemDefinition: any = {
                 id: "doc1",
@@ -220,13 +220,13 @@ describe("NodeJS CRUD Tests", function () {
         });
 
         it("nativeApi Validate Item TTL with no defaultTtl.", async function () {
-            const { result: db } = await client.databases.create({ id: "sample database" });
+            const { result: db } = await client.databases.create({ id: "ttl test3 database" });
 
             const containerDefinition = { id: "sample container" };
 
-            const { result: createdContainer } = await client.databases.getDatabase(db.id).containers.create(containerDefinition);
+            const { result: createdContainer } = await client.databases.get(db.id).containers.create(containerDefinition);
 
-            const container = await client.databases.getDatabase(db.id).containers.getContainer(createdContainer.id);
+            const container = await client.databases.get(db.id).containers.get(createdContainer.id);
 
             const itemDefinition = {
                 id: "doc1",
@@ -285,20 +285,20 @@ describe("NodeJS CRUD Tests", function () {
             const { result: doc } = await container.items.create(itemDefinition);
             assert.equal(itemDefinition.id, doc.id);
             await sleep(3000);
-            return miscCasesStep2(container, itemDefinition);
+            await miscCasesStep2(container, itemDefinition);
         }
 
         it("nativeApi Validate Item TTL Misc cases.", async function () {
-            const { result: db } = await client.databases.create({ id: "sample database" });
+            const { result: db } = await client.databases.create({ id: "ttl test4 database" });
 
             const containerDefinition = {
                 id: "sample container",
                 defaultTtl: 8,
             };
 
-            const { result: containerResult } = await client.databases.getDatabase(db.id).containers.create(containerDefinition);
+            const { result: containerResult } = await client.databases.get(db.id).containers.create(containerDefinition);
 
-            const container = await client.databases.getDatabase(db.id).containers.getContainer(containerResult.id);
+            const container = await client.databases.get(db.id).containers.get(containerResult.id);
 
             const itemDefinition = {
                 id: "doc1",

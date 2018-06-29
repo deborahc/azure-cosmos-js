@@ -18,8 +18,8 @@ const collectionId = config.names.collection
 let dbLink;
 let collLink;
 
-const host = config.connection.endpoint;
-const masterkey = config.connection.authKey;
+const endpoint = config.connection.endpoint;
+const masterKey = config.connection.authKey;
 
 const getDocumentDefinitions = function () {
     const data = fs.readFileSync('../Shared/Data/Families.json', 'utf8');   
@@ -27,7 +27,7 @@ const getDocumentDefinitions = function () {
 };
 
 // Establish a new instance of the DocumentDBClient to be used throughout this demo
-var client = new CosmosClient( {endpoint: host, auth: { masterkey }});
+var client = new CosmosClient( {endpoint, auth: { masterKey }});
 
 //NOTE: 
 //when using the new IDBased Routing URIs, instead of the _self, as we 're doing in this sample
@@ -53,8 +53,8 @@ async function run() {
 //ensuring a database & collection exists for us to work with
     await init();
     
-    const database = client.databases.getDatabase(databaseId);
-    const container = database.containers.getContainer(collectionId);
+    const database = client.databases.get(databaseId);
+    const container = database.containers.get(collectionId);
 
     //1.
     console.log('\n1. insertDocuments in to database \'' + databaseId + '\' and collection \'' + collectionId + '\'');
@@ -68,14 +68,14 @@ async function run() {
 
     //2. 
     console.log('\n2. listDocuments in collection \'' + collLink + '\'');
-    const {result: docs} = await container.items.read().toArray();
+    const {result: docs} = await container.items.readAll().toArray();
     
     for (const doc of docs) {
         console.log(doc.id);
     }
 
     //3.1
-    const item = container.items.getItem(docs[0].id);
+    const item = container.items.get(docs[0].id);
     console.log('\n3.1 readDocument \'' + item.id + '\'');
     const {result: readDoc} = await item.read();
     console.log('Document with id \'' + item.id + '\' found');
@@ -175,10 +175,10 @@ async function init() {
 }
 
 async function getOrCreateCollection(databaseId, id, callback) {
-    const database = client.databases.getDatabase(databaseId);
+    const database = client.databases.get(databaseId);
     try {
         try {
-            await database.containers.getContainer(id).read();
+            await database.containers.get(id).read();
         } catch (err) {
             // if it doesn't exist, create it
             if(err.code === 404) {
@@ -195,7 +195,7 @@ async function getOrCreateCollection(databaseId, id, callback) {
 async function getOrCreateDatabase(id, callback) {    
     try {
         try {
-            await client.databases.getDatabase(id).read();
+            await client.databases.get(id).read();
         } catch (err) {
             // if it doesn't exist, create it
             if(err.code === 404) {
@@ -217,7 +217,7 @@ async function handleError(error) {async
 }
 
 async function finish() {
-    await client.databases.getDatabase(dbLink).delete();
+    await client.databases.get(dbLink).delete();
     console.log('\nEnd of demo.');
 }
 

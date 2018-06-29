@@ -12,7 +12,7 @@ export class Permissions {
         this.client = this.user.database.client;
     }
 
-    public getPermission(id: string): Permission {
+    public get(id: string): Permission {
         return new Permission(this.user, id);
     }
 
@@ -21,7 +21,7 @@ export class Permissions {
             .queryPermissions(this.user.url, query, options) as QueryIterator<PermissionDefinition>;
     }
 
-    public read(options?: FeedOptions): QueryIterator<PermissionDefinition> {
+    public readAll(options?: FeedOptions): QueryIterator<PermissionDefinition> {
         return this.client.documentClient
             .readPermissions(this.user.url, options) as QueryIterator<PermissionDefinition>;
     }

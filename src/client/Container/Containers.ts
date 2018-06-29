@@ -8,7 +8,7 @@ import { ContainerDefinition } from "./ContainerDefinition";
 export class Containers {
     constructor(public readonly database: Database) { }
 
-    public getContainer(id: string): Container {
+    public get(id: string): Container {
         return new Container(this.database, id);
     }
 
@@ -32,7 +32,7 @@ export class Containers {
         return this.database.client.documentClient.createCollection(this.database.url, body, options);
     }
 
-    public read(options?: FeedOptions): QueryIterator<ContainerDefinition> {
+    public readAll(options?: FeedOptions): QueryIterator<ContainerDefinition> {
         return this.database.client.documentClient.readCollections(this.database.url, options);
     }
 }

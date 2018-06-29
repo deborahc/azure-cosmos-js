@@ -12,14 +12,14 @@ export class StoredProcedures {
         this.client = this.container.database.client;
     }
 
-    public getStoredProcedure(id: string): StoredProcedure {
+    public get(id: string): StoredProcedure {
         return new StoredProcedure(this.container, id);
     }
     public query(query: SqlQuerySpec, options?: FeedOptions): QueryIterator<StoredProcedureDefinition> {
         return this.client.documentClient.queryStoredProcedures(this.container.url, query, options);
     }
 
-    public read(options?: FeedOptions): QueryIterator<StoredProcedureDefinition> {
+    public readAll(options?: FeedOptions): QueryIterator<StoredProcedureDefinition> {
         return this.client.documentClient.readStoredProcedures(this.container.url, options);
     }
 

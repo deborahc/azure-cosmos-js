@@ -14,11 +14,11 @@ const config = require('../Shared/config')
 const databaseId = config.names.database
 const collectionId = config.names.collection
 
-var host = config.connection.endpoint;
+var endpoint = config.connection.endpoint;
 var masterKey = config.connection.authKey;
 
 // Establish a new instance of the DocumentDBClient to be used throughout this demo
-var client = new CosmosClient({ endpoint: host, auth: { masterKey } });
+var client = new CosmosClient({ endpoint, auth: { masterKey } });
 
 //---------------------------------------------------------------------------------
 // This demo performs a few steps
@@ -41,15 +41,14 @@ async function run() {
 
     //2.
     console.log('\n2. listCollections in database');
-    const iterator = database.containers.read();
-    const {result: containers} = await iterator.toArray();
-    for (const c of containers) {
-        console.log(c.id);
+    const iterator = database.containers.readAll();
+    for (const {result} of await iterator.forEach()) {
+        console.log(result.id);
     }
 
     //3.
     console.log('\n3. collection.read');
-    const container = database.containers.getContainer(collectionId);
+    const container = database.containers.get(collectionId);
     const {result: collection} = await container.read();
 
     console.log('Collection with url \'' + container.url + '\' was found its id is \'' + collection.id);
@@ -79,10 +78,10 @@ async function init(databaseId) {
         var databaseDef = { id: databaseId };
 
         const { result: newDB } = await client.databases.create(databaseDef);
-        database = client.databases.getDatabase(newDB.id);
+        client.databases.get(newDB.id);
         //database found, return it
     } else {
-        database = client.databases.getDatabase(results[0].id);
+        client.databases.get(results[0].id);
     }
 }
 

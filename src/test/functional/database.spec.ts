@@ -23,17 +23,17 @@ describe("NodeJS CRUD Tests", function () {
         const databaseCRUDTest = async function () {
             try {
                 // read databases
-                const { result: databases } = await client.databases.read().toArray();
+                const { result: databases } = await client.databases.readAll().toArray();
                 assert.equal(databases.constructor, Array, "Value should be an array");
 
                 // create a database
                 const beforeCreateDatabasesCount = databases.length;
-                const databaseDefinition = { id: "sample database" };
+                const databaseDefinition = { id: "database test database" };
                 const { result: db } = await client.databases.create(databaseDefinition);
                 assert.equal(db.id, databaseDefinition.id);
 
                 // read databases after creation
-                const { result: databases2 } = await client.databases.read().toArray();
+                const { result: databases2 } = await client.databases.readAll().toArray();
                 assert.equal(databases2.length, beforeCreateDatabasesCount + 1,
                     "create should increase the number of databases");
                 // query databases
@@ -50,10 +50,10 @@ describe("NodeJS CRUD Tests", function () {
                 assert(results.length > 0, "number of results for the query should be > 0");
 
                 // delete database
-                await client.databases.getDatabase(db.id).delete();
+                await client.databases.get(db.id).delete();
                 try {
                     // read database after deletion
-                    await client.databases.getDatabase(db.id).read();
+                    await client.databases.get(db.id).read();
                     assert.fail("Read database on non-existent database should fail");
                 } catch (err) {
                     const notFoundErrorCode = 404;

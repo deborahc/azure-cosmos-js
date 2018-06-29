@@ -25,7 +25,7 @@ describe("NodeJS CRUD Tests", function () {
             const database = await TestHelpers.getTestDatabase(client, "Validate user CRUD");
 
             // list users
-            const { result: users } = await database.users.read().toArray();
+            const { result: users } = await database.users.readAll().toArray();
             assert.equal(users.constructor, Array, "Value should be an array");
             const beforeCreateCount = users.length;
 
@@ -33,10 +33,10 @@ describe("NodeJS CRUD Tests", function () {
             const { result: userDef } = await TestHelpers.createOrUpsertUser(
                 database, { id: "new user" }, undefined, isUpsertTest);
             assert.equal(userDef.id, "new user", "user name error");
-            let user = database.users.getUser(userDef.id);
+            let user = database.users.get(userDef.id);
 
             // list users after creation
-            const { result: usersAfterCreation } = await database.users.read().toArray();
+            const { result: usersAfterCreation } = await database.users.readAll().toArray();
             assert.equal(usersAfterCreation.length, beforeCreateCount + 1);
 
             // query users
@@ -64,7 +64,7 @@ describe("NodeJS CRUD Tests", function () {
             }
             assert.equal(replacedUser.id, "replaced user", "user name should change");
             assert.equal(userDef.id, replacedUser.id, "user id should stay the same");
-            user = database.users.getUser(replacedUser.id);
+            user = database.users.get(replacedUser.id);
 
             // read user
             const { result: userAfterReplace } = await user.read();

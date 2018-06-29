@@ -37,7 +37,7 @@ describe("NodeJS CRUD Tests", function () {
 
         it("nativeApi Should do sproc CRUD operations successfully with create/replace", async function () {
             // read sprocs
-            const { result: sprocs } = await container.storedProcedures.read().toArray();
+            const { result: sprocs } = await container.storedProcedures.readAll().toArray();
             assert.equal(sprocs.constructor, Array, "Value should be an array");
 
             // create a sproc
@@ -53,7 +53,7 @@ describe("NodeJS CRUD Tests", function () {
             assert.equal(sproc.body, "function () { const x = 10; }");
 
             // read sprocs after creation
-            const { result: sprocsAfterCreation } = await container.storedProcedures.read().toArray();
+            const { result: sprocsAfterCreation } = await container.storedProcedures.readAll().toArray();
             assert.equal(sprocsAfterCreation.length, beforeCreateSprocsCount + 1, "create should increase the number of sprocs");
 
             // query sprocs
@@ -65,21 +65,21 @@ describe("NodeJS CRUD Tests", function () {
 
             // replace sproc
             sproc.body = function () { const x = 20; };
-            const { result: replacedSproc } = await container.storedProcedures.getStoredProcedure(sproc.id).replace(sproc);
+            const { result: replacedSproc } = await container.storedProcedures.get(sproc.id).replace(sproc);
 
             assert.equal(replacedSproc.id, sproc.id);
             assert.equal(replacedSproc.body, "function () { const x = 20; }");
 
             // read sproc
-            const { result: sprocAfterReplace } = await container.storedProcedures.getStoredProcedure(replacedSproc.id).read();
+            const { result: sprocAfterReplace } = await container.storedProcedures.get(replacedSproc.id).read();
             assert.equal(replacedSproc.id, sprocAfterReplace.id);
 
             // delete sproc
-            await container.storedProcedures.getStoredProcedure(replacedSproc.id).delete();
+            await container.storedProcedures.get(replacedSproc.id).delete();
 
             // read sprocs after deletion
             try {
-                await container.storedProcedures.getStoredProcedure(replacedSproc.id).read();
+                await container.storedProcedures.get(replacedSproc.id).read();
                 assert.fail("Must fail to read sproc after deletion");
             } catch (err) {
                 const notFoundErrorCode = 404;
@@ -89,7 +89,7 @@ describe("NodeJS CRUD Tests", function () {
 
         it("nativeApi Should do sproc CRUD operations successfully name based with upsert", async function () {
                    // read sprocs
-            const { result: sprocs } = await container.storedProcedures.read().toArray();
+            const { result: sprocs } = await container.storedProcedures.readAll().toArray();
             assert.equal(sprocs.constructor, Array, "Value should be an array");
 
             // create a sproc
@@ -106,7 +106,7 @@ describe("NodeJS CRUD Tests", function () {
             assert.equal(sproc.body, "function () { const x = 10; }");
 
             // read sprocs after creation
-            const { result: sprocsAfterCreation } = await container.storedProcedures.read().toArray();
+            const { result: sprocsAfterCreation } = await container.storedProcedures.readAll().toArray();
             assert.equal(sprocsAfterCreation.length, beforeCreateSprocsCount + 1, "create should increase the number of sprocs");
 
             // query sprocs
@@ -124,15 +124,15 @@ describe("NodeJS CRUD Tests", function () {
             assert.equal(replacedSproc.body, "function () { const x = 20; }");
 
             // read sproc
-            const { result: sprocAfterReplace } = await container.storedProcedures.getStoredProcedure(replacedSproc.id).read();
+            const { result: sprocAfterReplace } = await container.storedProcedures.get(replacedSproc.id).read();
             assert.equal(replacedSproc.id, sprocAfterReplace.id);
 
             // delete sproc
-            await container.storedProcedures.getStoredProcedure(replacedSproc.id).delete();
+            await container.storedProcedures.get(replacedSproc.id).delete();
 
             // read sprocs after deletion
             try {
-                await container.storedProcedures.getStoredProcedure(replacedSproc.id).read();
+                await container.storedProcedures.get(replacedSproc.id).read();
                 assert.fail("Must fail to read sproc after deletion");
             } catch (err) {
                 const notFoundErrorCode = 404;
@@ -186,14 +186,14 @@ describe("NodeJS CRUD Tests", function () {
                 // tslint:enable:object-literal-shorthand
 
             const { result: retrievedSproc } = await container.storedProcedures.create(sproc1);
-            const { result: result } = await container.storedProcedures.getStoredProcedure(retrievedSproc.id).execute();
+            const { result: result } = await container.storedProcedures.get(retrievedSproc.id).execute();
             assert.equal(result, 999);
 
             const { result: retrievedSproc2 } = await container.storedProcedures.create(sproc2);
-            const { result: result2 } = await container.storedProcedures.getStoredProcedure(retrievedSproc2.id).execute();
+            const { result: result2 } = await container.storedProcedures.get(retrievedSproc2.id).execute();
             assert.equal(result2, 123456789);
             const { result: retrievedSproc3 } = await container.storedProcedures.create(sproc3);
-            const { result: result3 } = await container.storedProcedures.getStoredProcedure(retrievedSproc3.id).execute([{ temp: "so" }]);
+            const { result: result3 } = await container.storedProcedures.get(retrievedSproc3.id).execute([{ temp: "so" }]);
             assert.equal(result3, "aso");
         });
 
@@ -236,20 +236,20 @@ describe("NodeJS CRUD Tests", function () {
             // tslint:enable:object-literal-shorthand
 
             const { result: retrievedSproc } = await container.storedProcedures.upsert(sproc1);
-            const { result: result } = await container.storedProcedures.getStoredProcedure(retrievedSproc.id).execute();
+            const { result: result } = await container.storedProcedures.get(retrievedSproc.id).execute();
             assert.equal(result, 999);
 
             const { result: retrievedSproc2 } = await container.storedProcedures.upsert(sproc2);
-            const { result: result2 } = await container.storedProcedures.getStoredProcedure(retrievedSproc2.id).execute();
+            const { result: result2 } = await container.storedProcedures.get(retrievedSproc2.id).execute();
             assert.equal(result2, 123456789);
             const { result: retrievedSproc3 } = await container.storedProcedures.upsert(sproc3);
-            const { result: result3 } = await container.storedProcedures.getStoredProcedure(retrievedSproc3.id).execute([{ temp: "so" }]);
+            const { result: result3 } = await container.storedProcedures.get(retrievedSproc3.id).execute([{ temp: "so" }]);
             assert.equal(result3, "aso");
         });
     });
 
     it("nativeApi Should execute stored procedure with partition key successfully name based", async function () {
-        const { result: db } = await client.databases.create({ id: "sample database" });
+        const { result: db } = await client.databases.create({ id: "sproc test database" });
         // create container
         const partitionKey = "key";
 
@@ -258,8 +258,8 @@ describe("NodeJS CRUD Tests", function () {
             partitionKey: { paths: ["/" + partitionKey], kind: DocumentBase.PartitionKind.Hash },
         };
 
-        const { result: containerResult } = await client.databases.getDatabase(db.id).containers.create(containerDefinition, { offerThroughput: 12000 });
-        const container = await client.databases.getDatabase(db.id).containers.getContainer(containerResult.id);
+        const { result: containerResult } = await client.databases.get(db.id).containers.create(containerDefinition, { offerThroughput: 12000 });
+        const container = await client.databases.get(db.id).containers.get(containerResult.id);
 
         // tslint:disable:no-var-keyword
         // tslint:disable:prefer-const
@@ -302,12 +302,12 @@ describe("NodeJS CRUD Tests", function () {
 
         const returnedDocuments = await TestHelpers.bulkInsertItems(container, documents);
         const { result: sproc } = await container.storedProcedures.create(querySproc);
-        const { result: result } = await container.storedProcedures.getStoredProcedure(sproc.id).execute([], { partitionKey: null });
+        const { result: result } = await container.storedProcedures.get(sproc.id).execute([], { partitionKey: null });
         assert(result !== undefined);
         assert.equal(result.length, 1);
         assert.equal(JSON.stringify(result[0]), JSON.stringify(documents[1]));
 
-        const { result: result2 } = await container.storedProcedures.getStoredProcedure(sproc.id).execute(null, { partitionKey: 1 });
+        const { result: result2 } = await container.storedProcedures.get(sproc.id).execute(null, { partitionKey: 1 });
         assert(result2 !== undefined);
         assert.equal(result2.length, 1);
         assert.equal(JSON.stringify(result2[0]), JSON.stringify(documents[4]));
@@ -315,11 +315,11 @@ describe("NodeJS CRUD Tests", function () {
 
     it("nativeApi Should enable/disable script logging while executing stored procedure", async function () {
         // create database
-        const { result: db } = await client.databases.create({ id: "sample database" });
+        const { result: db } = await client.databases.create({ id: "sproc test database" });
         // create container
-        const { result: containerResult } = await client.databases.getDatabase(db.id).containers.create({ id: "sample container" });
+        const { result: containerResult } = await client.databases.get(db.id).containers.create({ id: "sample container" });
 
-        const container = await client.databases.getDatabase(db.id).containers.getContainer(containerResult.id);
+        const container = await client.databases.get(db.id).containers.get(containerResult.id);
 
          // tslint:disable:curly
          // tslint:disable:no-string-throw
@@ -348,17 +348,17 @@ describe("NodeJS CRUD Tests", function () {
          // tslint:enable:object-literal-shorthand
 
         const { result: retrievedSproc } = await container.storedProcedures.create(sproc1);
-        const { result: result1, headers: headers1 } = await container.storedProcedures.getStoredProcedure(retrievedSproc.id).execute();
+        const { result: result1, headers: headers1 } = await container.storedProcedures.get(retrievedSproc.id).execute();
         assert.equal(result1, "Success!");
         assert.equal(headers1[Constants.HttpHeaders.ScriptLogResults], undefined);
 
         let requestOptions = { enableScriptLogging: true };
-        const { result: result2, headers: headers2 } = await container.storedProcedures.getStoredProcedure(retrievedSproc.id).execute([], requestOptions);
+        const { result: result2, headers: headers2 } = await container.storedProcedures.get(retrievedSproc.id).execute([], requestOptions);
         assert.equal(result2, "Success!");
         assert.equal(headers2[Constants.HttpHeaders.ScriptLogResults],  encodeURIComponent("The value of x is 1."));
 
         requestOptions = { enableScriptLogging: false };
-        const { result: result3, headers: headers3 } =  await container.storedProcedures.getStoredProcedure(retrievedSproc.id).execute([], requestOptions);
+        const { result: result3, headers: headers3 } =  await container.storedProcedures.get(retrievedSproc.id).execute([], requestOptions);
         assert.equal(result3, "Success!");
         assert.equal(headers3[Constants.HttpHeaders.ScriptLogResults], undefined);
 

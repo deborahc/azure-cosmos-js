@@ -12,7 +12,7 @@ export class Triggers {
         this.client = this.container.database.client;
     }
 
-    public getTrigger(id: string): Trigger {
+    public get(id: string): Trigger {
         return new Trigger(this.container, id);
     }
 
@@ -21,7 +21,7 @@ export class Triggers {
             .queryTriggers(this.container.url, query, options) as QueryIterator<TriggerDefinition>;
     }
 
-    public read(options?: FeedOptions): QueryIterator<TriggerDefinition> {
+    public readAll(options?: FeedOptions): QueryIterator<TriggerDefinition> {
         return this.client.documentClient.readTriggers(this.container.url, options) as QueryIterator<TriggerDefinition>;
     }
     /**

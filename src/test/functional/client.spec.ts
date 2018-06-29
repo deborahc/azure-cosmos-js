@@ -27,11 +27,11 @@ describe("NodeJS CRUD Tests", function () {
             const connectionPolicy = new DocumentBase.ConnectionPolicy();
             // making timeout 5 ms to make sure it will throw
             // (create database request takes 10ms-15ms to finish on emulator)
-            connectionPolicy.RequestTimeout = 5;
+            connectionPolicy.RequestTimeout = 1;
             const failFailClient = new CosmosClient({endpoint, auth: { masterKey }, connectionPolicy});
             // create database
             try {
-                await failFailClient.databases.create({ id: "sample database" });
+                await failFailClient.databases.create({ id: "client test database" });
                 assert.fail("Must throw when trying to connect to database");
             } catch (err) {
                 assert.equal(err.code, "ECONNRESET", "client should throw exception");
