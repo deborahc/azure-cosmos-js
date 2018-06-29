@@ -4,11 +4,17 @@
   "description": "User Study Code",
   "main": "TodoCLI.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node ./TodoCLI.ts",
+    "setup": "ts-node ./TodoSetup.ts",
+    "ref-start": "ts-node ./ReferenceImplementation/TodoCLI_Reference.ts",
+    "ref-setup": "ts-node ./ReferenceImplementation/TodoSetup_Reference.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "commander": "^2.15.1"
+  },
+  "devDependencies": {
+    "ts-node": "^7.0.0"
   }
 }

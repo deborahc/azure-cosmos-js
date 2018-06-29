@@ -36,13 +36,8 @@ async function run() {
     await init(databaseId);
 
     //1.
-<<<<<<< HEAD:samples/CollectionManagement/app.js
-    console.log('1. createCollection with id \'' + collectionId + '\'');
-    await database.containers.create({id: collectionId});
-=======
     console.log('1. create container ith id \'' + containerId + '\'');
     await database.containers.create({id: containerId});
->>>>>>> feature/object-model-refactor:samples/ContainerManagement/app.js
 
     //2.
     console.log('\n2. read all containers in database');

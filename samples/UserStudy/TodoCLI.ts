@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const cosmos = require('../../lib/');
-const config = require('../Shared/config')
+import * as cosmos from '../../lib/';
+const config = require('../Shared/config');
 
 const host = config.connection.endpoint;
 const masterKey = config.connection.authKey;
@@ -15,7 +15,7 @@ var program = require('commander');
 
 /** TASK 1: TODO: Implement a function to add a new todo-item to the container in the database **/
 
-async function addToDoItem(category, description) {
+async function addToDoItem(category: string, description: string) {
 
 }
 
@@ -25,7 +25,7 @@ async function queryAllToDoItems() {
 
 }
 
-async function handleError(error) {
+async function handleError(error: cosmos.ErrorResponse) {
     console.log('\nAn error with code \'' + error.code + '\' has occurred:');
     console.log('\t' + JSON.parse(error.body).message);
 }
@@ -34,7 +34,7 @@ async function handleError(error) {
 program
     .command('add <category> <description>')
     .description('Add a todo-item with category and description')
-    .action(function (category, description, args) {
+    .action(function (category: string, description: string) {
         addToDoItem(category, description).catch(handleError);
     });
 
@@ -42,7 +42,7 @@ program
 program
     .command('list') 
     .description('List all todo-items')
-    .action(function (args) {
+    .action(function () {
         queryAllToDoItems().catch(handleError);
     });
 

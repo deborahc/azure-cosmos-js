@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const cosmos = require('../../../lib/');
-const config = require('../../Shared/config')
+import * as cosmos from '../../../lib/';
+const config = require('../../Shared/config');
 
 const host = config.connection.endpoint;
 const masterKey = config.connection.authKey;
@@ -15,7 +15,7 @@ var program = require('commander');
 
 /** TASK 1: Implement a function to add a new todo-item to the container in the database **/
 
-async function addToDoItem(category, description) {
+async function addToDoItem(category: string, description: string) {
     try {
         const container =  client.databases.get(databaseId).containers.get(containerId);
         console.log("Adding task with category: " + category + " and description: " + description);
@@ -23,7 +23,7 @@ async function addToDoItem(category, description) {
         container.items.create(item);
     } catch (error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
     }
 }
 
@@ -38,13 +38,14 @@ async function queryAllToDoItems() {
         }
     } catch (error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
+
     }
 }
 
 /** TASK 2: Implement a function to list all todo-items in the container in the database **/
 
-async function handleError(error) {
+async function handleError(error: cosmos.ErrorResponse) {
     console.log('\nAn error with code \'' + error.code + '\' has occurred:');
     console.log('\t' + JSON.parse(error.body).message);
 }
@@ -53,7 +54,7 @@ async function handleError(error) {
 program
     .command('add <category> <description>')
     .description('Add a todo-item with category and description')
-    .action(function (category, description, args) {
+    .action(function (category: string, description:string) {
         addToDoItem(category, description).catch(handleError);
     });
 
@@ -61,17 +62,17 @@ program
 program
     .command('list') 
     .description('List all todo-items')
-    .action(function (args) {
+    .action(function () {
         queryAllToDoItems().catch(handleError);
     });
 
 program.parse(process.argv);
 
-// async function run() {
-//     const category = "Errand";
-//     const description = "Pick up library book";
-//     await addToDoItem(category,description).catch(handleError);
-//     await queryAllToDoItems().catch(handleError);
-// }
+async function run() {
+    const category = "Errand";
+    const description = "Pick up library book";
+    await addToDoItem(category,description).catch(handleError);
+    await queryAllToDoItems().catch(handleError);
+}
 
-//run().catch(handleError);
+run().catch(handleError);

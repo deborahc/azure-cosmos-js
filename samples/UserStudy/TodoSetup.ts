@@ -5,8 +5,8 @@ console.log('TODO SETUP');
 console.log('===================');
 console.log();
 
-const cosmos = require('../../lib/');
-const config = require('../Shared/config')
+import * as cosmos from '../../lib/';
+const config = require('../Shared/config');
   
 const host = config.connection.endpoint;
 const masterKey = config.connection.authKey;
@@ -26,7 +26,7 @@ async function createDatabaseIfNotExists() {
     }
     catch(error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
     }
 
     //1c: TODO: Read the database and print out its id
@@ -42,13 +42,13 @@ async function createContainerIfNotExists() {
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
     }
     //2b: TODO: Read the container and print out its id
     console.log('Container with id \'' + "TODO" + ' was found' );
 }
 
-function handleError(error) {
+function handleError(error: cosmos.ErrorResponse) {
     console.log();
     console.log('An error with code \'' + error.code + '\' has occurred:');
     console.log('\t' + JSON.parse(error.body).message);

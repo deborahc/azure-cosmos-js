@@ -5,8 +5,8 @@ console.log('TODO SETUP');
 console.log('===================');
 console.log();
 
-const cosmos = require('../../../lib/');
-const config = require('../../Shared/config')
+import * as cosmos from '../../../lib/';
+const config = require('../../Shared/config');
   
 const host = config.connection.endpoint;
 const masterKey = config.connection.authKey;
@@ -27,7 +27,7 @@ async function createDatabaseIfNotExists() {
     }
     catch(error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
         if(err.code === 404) {
             console.log('Creating new database \'dbs/' + databaseId);
             await client.databases.create({id: databaseId});
@@ -41,7 +41,7 @@ async function createDatabaseIfNotExists() {
     console.log('Database with uri of \'dbs/' + db.id + '\' was found');
 }
 
-/** TASK 2: CREATE A NEW COLLECTION **/
+/** TASK 2: CREATE A NEW CONTAINER **/
 
 // 2a. Implement a function createContainerIfNotExists() to read a container to see if it exists, create a new one if it does not, and print its name
 async function createContainerIfNotExists() {
@@ -53,7 +53,7 @@ async function createContainerIfNotExists() {
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
-        const err = error;
+        const err: cosmos.ErrorResponse = error;
         if(err.code === 404) {
             console.log('Creating new container \'container/' + containerId);
             await database.containers.create({id: containerId});
@@ -67,7 +67,7 @@ async function createContainerIfNotExists() {
     console.log('Container with id \'' + containerDef.id + ' was found' );
 }
 
-function handleError(error) {
+function handleError(error: cosmos.ErrorResponse) {
     console.log();
     console.log('An error with code \'' + error.code + '\' has occurred:');
     console.log('\t' + JSON.parse(error.body).message);
