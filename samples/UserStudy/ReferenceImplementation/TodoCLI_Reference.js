@@ -17,7 +17,7 @@ var program = require('commander');
 
 async function addToDoItem(category, description) {
     try {
-        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
+        const container =  client.databases.get(databaseId).containers.get(containerId);
         console.log("Adding task with category: " + category + " and description: " + description);
         const item = { "category": category, "description": description };
         container.items.create(item);
@@ -31,8 +31,8 @@ async function addToDoItem(category, description) {
 
 async function queryAllToDoItems() {
     try {
-        const container =  client.databases.getDatabase(databaseId).containers.getContainer(containerId);
-        const { result: items } = await container.items.read().toArray();
+        const container =  client.databases.get(databaseId).containers.get(containerId);
+        const { result: items } = await container.items.readAll().toArray();
         for (let item of items) {
             console.log(item.category, item.description);
         }
@@ -57,7 +57,7 @@ program
         addToDoItem(category, description).catch(handleError);
     });
 
-// To run: .\TodoCLI.js list
+// To run: node .\TodoCLI.js list
 program
     .command('list') 
     .description('List all todo-items')
@@ -66,3 +66,12 @@ program
     });
 
 program.parse(process.argv);
+
+// async function run() {
+//     const category = "Errand";
+//     const description = "Pick up library book";
+//     await addToDoItem(category,description).catch(handleError);
+//     await queryAllToDoItems().catch(handleError);
+// }
+
+//run().catch(handleError);

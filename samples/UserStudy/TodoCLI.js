@@ -30,7 +30,7 @@ async function handleError(error) {
     console.log('\t' + JSON.parse(error.body).message);
 }
 
-// To run: node .\TodoCLI.js add <category> <description>
+// To run from terminal: node .\TodoCLI.js add <category> <description>
 program
     .command('add <category> <description>')
     .description('Add a todo-item with category and description')
@@ -38,7 +38,7 @@ program
         addToDoItem(category, description).catch(handleError);
     });
 
-// To run: .\TodoCLI.js list
+// To run from terminal: node .\TodoCLI.js list
 program
     .command('list') 
     .description('List all todo-items')
@@ -47,3 +47,14 @@ program
     });
 
 program.parse(process.argv);
+
+/** Uncomment to run from F5 **/
+
+// async function run() {
+//     const category = "Errand";
+//     const description = "Pick up library book";
+//     await addToDoItem(category,description).catch(handleError);
+//     await queryAllToDoItems().catch(handleError);
+// }
+
+//run().catch(handleError);

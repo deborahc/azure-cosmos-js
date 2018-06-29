@@ -23,7 +23,7 @@ const client = new CosmosClient({endpoint: host, auth: { masterKey }});
 // 1b. Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its id
 async function createDatabaseIfNotExists() {
     try {
-        const {result: db} = await client.databases.getDatabase(databaseId).read();
+        const {result: db} = await client.databases.get(databaseId).read();
     }
     catch(error) {
         /** @type{cosmos.ErrorResponse} */
@@ -37,7 +37,7 @@ async function createDatabaseIfNotExists() {
     }
 
     //1c: Read the database and print out its id
-    const {result: db} = await client.databases.getDatabase(databaseId).read();
+    const {result: db} = await client.databases.get(databaseId).read();
     console.log('Database with uri of \'dbs/' + db.id + '\' was found');
 }
 
@@ -45,11 +45,11 @@ async function createDatabaseIfNotExists() {
 
 // 2a. Implement a function createContainerIfNotExists() to read a container to see if it exists, create a new one if it does not, and print its name
 async function createContainerIfNotExists() {
-    const database = await client.databases.getDatabase(databaseId);
+    const database = await client.databases.get(databaseId);
     try {
-        //const container = database.containers.getContainer(containerId);
+        //const container = database.containers.get(containerId);
         //const {result: containerDef} = await container.read();
-        const {result: containerDef} = await database.containers.getContainer(containerId).read();
+        const {result: containerDef} = await database.containers.get(containerId).read();
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
@@ -62,7 +62,7 @@ async function createContainerIfNotExists() {
         }
     }
     //2b: Read the container and print out its id
-    const container = database.containers.getContainer(containerId);
+    const container = database.containers.get(containerId);
     const {result: containerDef} = await container.read();
     console.log('Container with id \'' + containerDef.id + ' was found' );
 }
