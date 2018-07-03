@@ -8,14 +8,14 @@ console.log();
 import * as cosmos from '../../lib/';
 const config = require('../Shared/config');
   
-const host = config.connection.endpoint;
+const endpoint = config.connection.endpoint;
 const masterKey = config.connection.authKey;
 
 const CosmosClient = cosmos.CosmosClient;
 const databaseId = 'UserStudy_TodoDB'
 const containerId = 'UserStudy_TodoContainer'
 
-/** TASK 1: CREATE A NEW DATABASE **/
+/** TASK 1: CREATE A NEW DATABASE. The database and container do not currently exist. **/
 
 // 1a. TODO: Establish a new instance of CosmosClient to be used in this setup
 

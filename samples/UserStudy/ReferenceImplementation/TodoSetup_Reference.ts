@@ -8,7 +8,7 @@ console.log();
 import * as cosmos from '../../../lib/';
 const config = require('../../Shared/config');
   
-const host = config.connection.endpoint;
+const endpoint = config.connection.endpoint;
 const masterKey = config.connection.authKey;
 
 const CosmosClient = cosmos.CosmosClient;
@@ -18,7 +18,7 @@ const containerId = 'UserStudy_TodoContainer'
 /** TASK 1: CREATE A NEW DATABASE **/
 
 // 1a. Establish a new instance of CosmosClient to be used in this setup
-const client = new CosmosClient({endpoint: host, auth: { masterKey }});
+const client = new CosmosClient({endpoint: endpoint, auth: { masterKey }});
 
 // 1b. Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its id
 async function createDatabaseIfNotExists() {

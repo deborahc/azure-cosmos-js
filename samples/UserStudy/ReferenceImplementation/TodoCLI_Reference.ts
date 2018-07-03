@@ -2,14 +2,14 @@
 import * as cosmos from '../../../lib/';
 const config = require('../../Shared/config');
 
-const host = config.connection.endpoint;
+const endpoint = config.connection.endpoint;
 const masterKey = config.connection.authKey;
 
 const CosmosClient = cosmos.CosmosClient;
 const databaseId = 'UserStudy_TodoDB'
 const containerId = 'UserStudy_TodoContainer'
 
-const client = new CosmosClient({ endpoint: host, auth: { masterKey } });
+const client = new CosmosClient({ endpoint: endpoint, auth: { masterKey } });
 
 var program = require('commander');
 
