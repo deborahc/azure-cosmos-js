@@ -12,7 +12,7 @@ const masterKey = testConfig.masterKey;
 // TODO: there is alot of leaky document client stuff here that will make removing document client hard
 
 describe("Session Token", function () {
-    this.timeout(10000);
+    this.timeout(process.env.MOCHA_TIMEOUT || 20000);
     const client = new CosmosClient({ endpoint, auth: { masterKey }, consistencyLevel: ConsistencyLevel.Session });
     const databaseId = "sessionTestDB";
     const containerId = "sessionTestColl";
@@ -166,8 +166,7 @@ describe("Session Token", function () {
         });
         const applySessionTokenStub = sinon.stub(client.documentClient, "applySessionToken").callsFake(callbackSpy);
         try {
-            const { result: document11 } =
-                await container.items.get("1").read({ partitionKey: "1" });
+            await container.items.get("1").read({ partitionKey: "1" });
             assert.fail("readDocument must throw");
         } catch (err) {
             assert.equal(err.substatus, 1002, "Substatus should indicate the LSN didn't catchup.");
@@ -203,4 +202,34 @@ describe("Session Token", function () {
         assert.equal(client.documentClient.getSessionToken(container.url), ""); // TODO: _self
         assert.notEqual(client2.documentClient.getSessionToken(container.url), "");
     });
+
+    it("validate session container update on 'Not found' with 'undefined' status code for non master resource",
+        async function () {
+            const client2 = new CosmosClient({
+                endpoint, auth: { masterKey }, consistencyLevel: ConsistencyLevel.Session,
+            });
+            const { result: databaseDef } = await client.databases.create(databaseBody);
+            const db = client.databases.get(databaseDef.id);
+
+            const { result: createdContainerDef } =
+                await db.containers.create(containerDefinition, containerOptions);
+            const createdContainer = db.containers.get(createdContainerDef.id);
+
+            const { result: createdDocument } = await createdContainer.items.create({ id: "1" });
+            const requestOptions = { partitionKey: "1" };
+            await client2.databases.get(databaseDef.id)
+                .containers.get(createdContainerDef.id)
+                .items.get(createdDocument.id).delete(requestOptions);
+            const setSessionTokenSpy = sinon.spy(client.documentClient.sessionContainer, "setSessionToken");
+
+            try {
+                await createdContainer.items.get(createdDocument.id).read(requestOptions);
+                assert.fail("Must throw");
+            } catch (err) {
+                assert.equal(err.code, 404, "expecting 404 (Not found)");
+                assert.equal(err.substatus, undefined, "expecting substatus code to be undefined");
+                assert.equal(setSessionTokenSpy.callCount, 1, "unexpected number of calls to sesSessionToken");
+                setSessionTokenSpy.restore();
+            }
+        });
 });

@@ -13,16 +13,6 @@ const endpoint = testConfig.host;
 const masterKey = testConfig.masterKey;
 const client = new CosmosClient({ endpoint, auth: { masterKey } });
 
-process.on("unhandledRejection", (error) => {
-    if (error.body) {
-        try {
-            error.body = JSON.parse(error.body);
-        } catch (err) { /* NO OP */ }
-    }
-    console.error(new Error("Unhandled exception found"));
-    console.error(JSON.stringify(error, null, " "));
-});
-
 describe("Cross Partition", function () {
     this.timeout(process.env.MOCHA_TIMEOUT || "30000");
     const generateDocuments = function (docSize: number) {
@@ -249,11 +239,27 @@ describe("Cross Partition", function () {
             validateResults(results, expectedOrderIds);
         };
 
+        const validateQueryMetrics = async function (queryIterator: QueryIterator<any>) {
+            try {
+                while (queryIterator.hasMoreResults()) {
+                    const { result: results, headers } = await queryIterator.executeNext();
+                    if (results === undefined) {
+                        break;
+                    }
+
+                    assert.notEqual(headers[Constants.HttpHeaders.QueryMetrics], null);
+                }
+            } catch (err) {
+                throw err;
+            }
+        };
+
         const executeQueryAndValidateResults =
             async function (
                 query: string | SqlQuerySpec, options: any,
                 expectedOrderIds: any[], validateExecuteNextWithContinuationToken?: boolean) {
 
+                options.populateQueryMetrics = true;
                 validateExecuteNextWithContinuationToken = validateExecuteNextWithContinuationToken || false;
                 const queryIterator = container.items.query(query, options);
 
@@ -264,6 +270,7 @@ describe("Cross Partition", function () {
                 queryIterator.reset();
                 await validateNextItemAndCurrentAndHasMoreResults(queryIterator, expectedOrderIds);
                 await validateForEach(queryIterator, expectedOrderIds);
+                await validateQueryMetrics(queryIterator);
             };
 
         const requestChargeValidator = async function (queryIterator: QueryIterator<any>) {
@@ -307,7 +314,10 @@ describe("Cross Partition", function () {
         it("Validate Parallel Query As String With maxDegreeOfParallelism: -1", async function () {
             // simple order by query in string format
             const query = "SELECT * FROM root r";
-            const options = { enableCrossPartitionQuery: true, maxItemCount: 2, maxDegreeOfParallelism: -1 };
+            const options = {
+                enableCrossPartitionQuery: true, maxItemCount: 2, maxDegreeOfParallelism: -1,
+                populateQueryMetrics: true,
+            };
 
             // prepare expected results
             const getOrderByKey = function (r: any) {
