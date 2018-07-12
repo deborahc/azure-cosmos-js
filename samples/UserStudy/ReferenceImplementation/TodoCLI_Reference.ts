@@ -17,7 +17,7 @@ var program = require('commander');
 
 async function addToDoItem(category: string, description: string) {
     try {
-        const container =  client.databases.get(databaseId).containers.get(containerId);
+        const container = client.database(databaseId).container(containerId);
         console.log("Adding task with category: " + category + " and description: " + description);
         const item = { "category": category, "description": description };
         container.items.create(item);
@@ -31,7 +31,7 @@ async function addToDoItem(category: string, description: string) {
 
 async function queryAllToDoItems() {
     try {
-        const container =  client.databases.get(databaseId).containers.get(containerId);
+        const container = client.database(databaseId).container(containerId);
         const { result: items } = await container.items.readAll().toArray();
         for (let item of items) {
             console.log(item.category, item.description);

@@ -20,10 +20,11 @@ const containerId = 'UserStudy_TodoContainer'
 // 1a. Establish a new instance of CosmosClient to be used in this setup
 const client = new CosmosClient({endpoint: endpoint, auth: { masterKey }});
 
-// 1b. Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its id
+// 1b. Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its ID
 async function createDatabaseIfNotExists() {
     try {
-        const {result: db} = await client.databases.get(databaseId).read();
+        const {database} = await client.database(databaseId).read();
+        console.log('Database with uri of \'dbs/' + database.id + '\' was found');
     }
     catch(error) {
         /** @type{cosmos.ErrorResponse} */
@@ -35,21 +36,16 @@ async function createDatabaseIfNotExists() {
             throw err;
         }
     }
-
-    //1c: Read the database and print out its id
-    const {result: db} = await client.databases.get(databaseId).read();
-    console.log('Database with uri of \'dbs/' + db.id + '\' was found');
 }
 
 /** TASK 2: CREATE A NEW CONTAINER **/
 
 // 2a. Implement a function createContainerIfNotExists() to read a container to see if it exists, create a new one if it does not, and print its name
 async function createContainerIfNotExists() {
-    const database = await client.databases.get(databaseId);
+    const database = await client.database(databaseId);
     try {
-        //const container = database.containers.get(containerId);
-        //const {result: containerDef} = await container.read();
-        const {result: containerDef} = await database.containers.get(containerId).read();
+        const {container} = await database.container(containerId).read();
+        console.log('Container with id \'' + container.id + ' was found' );
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
@@ -61,10 +57,6 @@ async function createContainerIfNotExists() {
             throw err;
         }
     }
-    //2b: Read the container and print out its id
-    const container = database.containers.get(containerId);
-    const {result: containerDef} = await container.read();
-    console.log('Container with id \'' + containerDef.id + ' was found' );
 }
 
 function handleError(error: cosmos.ErrorResponse) {

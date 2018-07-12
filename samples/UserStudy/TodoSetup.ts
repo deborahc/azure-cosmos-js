@@ -19,18 +19,15 @@ const containerId = 'UserStudy_TodoContainer'
 
 // 1a. TODO: Establish a new instance of CosmosClient to be used in this setup
 
-// 1b. TODO: Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its id
+// 1b. Implement a function createDatabaseIfNotExists() to read a database to see if it exists, create a new one if it does not, and print its ID
 async function createDatabaseIfNotExists() {
     try {
-
+        console.log('Database with uri of \'dbs/' + 'TODO_IMPLEMENT' + '\' was found');
     }
     catch(error) {
         /** @type{cosmos.ErrorResponse} */
         const err: cosmos.ErrorResponse = error;
     }
-
-    //1c: TODO: Read the database and print out its id
-    console.log('Database with uri of \'dbs/' + "TODO" + '\' was found');
 }
 
 /** TASK 2: CREATE A NEW COLLECTION **/
@@ -38,14 +35,12 @@ async function createDatabaseIfNotExists() {
 // 2a. TODO: Implement a function createContainerIfNotExists() to read a container to see if it exists, create a new one if it does not, and print its name
 async function createContainerIfNotExists() {
     try {
-
+        console.log('Container with id \'' + 'TODO_IMPLEMENT' + ' was found' );
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
         const err: cosmos.ErrorResponse = error;
     }
-    //2b: TODO: Read the container and print out its id
-    console.log('Container with id \'' + "TODO" + ' was found' );
 }
 
 function handleError(error: cosmos.ErrorResponse) {
