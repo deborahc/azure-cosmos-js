@@ -1,11 +1,13 @@
 import { Constants, UriFactory } from "../../common";
 import { RequestOptions, Response } from "../../request";
+import { Conflict } from "../Conflict";
 import { Database } from "../Database";
-import { Items } from "../Item";
-import { StoredProcedures } from "../StoredProcedure";
-import { Triggers } from "../Trigger";
-import { UserDefinedFunctions } from "../UserDefinedFunction";
+import { Item, Items } from "../Item";
+import { StoredProcedure, StoredProcedures } from "../StoredProcedure";
+import { Trigger, Triggers } from "../Trigger";
+import { UserDefinedFunction, UserDefinedFunctions } from "../UserDefinedFunction";
 import { ContainerDefinition } from "./ContainerDefinition";
+import { ContainerResponse } from "./ContainerResponse";
 
 export class Container {
     public readonly items: Items;
@@ -24,15 +26,38 @@ export class Container {
         this.userDefinedFunctions = new UserDefinedFunctions(this);
     }
 
-    public read(options?: RequestOptions): Promise<Response<ContainerDefinition>> {
-        return this.database.client.documentClient.readCollection(this.url, options);
+    public item(id: string, partitionKey?: string): Item {
+        return new Item(this, id, partitionKey);
     }
 
-    public replace(body: ContainerDefinition, options?: RequestOptions): Promise<Response<ContainerDefinition>> {
-        return this.database.client.documentClient.replaceCollection(this.url, body, options);
+    public userDefinedFunction(id: string): UserDefinedFunction {
+        return new UserDefinedFunction(this, id);
     }
 
-    public delete(options?: RequestOptions): Promise<Response<ContainerDefinition>> {
-        return this.database.client.documentClient.deleteCollection(this.url, options);
+    public conflict(id: string): Conflict {
+        return new Conflict(this, id);
+    }
+
+    public storedProcedure(id: string): StoredProcedure {
+        return new StoredProcedure(this, id);
+    }
+
+    public trigger(id: string): Trigger {
+        return new Trigger(this, id);
+    }
+
+    public async read(options?: RequestOptions): Promise<ContainerResponse> {
+        const response = await this.database.client.documentClient.readCollection(this.url, options);
+        return {body: response.result, headers: response.headers, ref: this, container: this};
+    }
+
+    public async replace(body: ContainerDefinition, options?: RequestOptions): Promise<ContainerResponse> {
+        const response = await this.database.client.documentClient.replaceCollection(this.url, body, options);
+        return {body: response.result, headers: response.headers, ref: this, container: this};
+    }
+
+    public async delete(options?: RequestOptions): Promise<ContainerResponse> {
+        const response = await this.database.client.documentClient.deleteCollection(this.url, options);
+        return {body: response.result, headers: response.headers, ref: this, container: this};
     }
 }

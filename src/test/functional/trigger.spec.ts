@@ -37,13 +37,11 @@ describe("NodeJS CRUD Tests", function () {
         });
 
         // create container
-        await client.databases
-            .get(dbId)
+        await client.database(dbId)
             .containers.create({ id: containerId });
 
-        container = await client.databases
-            .get(dbId)
-            .containers.get(containerId);
+        container = await client.database(dbId)
+            .container(containerId);
     });
 
     describe("Validate Trigger CRUD", function () {
@@ -90,21 +88,21 @@ describe("NodeJS CRUD Tests", function () {
 
             // replace trigger
             trigger.body = function () { const x = 20; };
-            const { result: replacedTrigger } = await container.triggers.get(trigger.id).replace(trigger);
+            const { result: replacedTrigger } = await container.trigger(trigger.id).replace(trigger);
 
             assert.equal(replacedTrigger.id, trigger.id);
             assert.equal(replacedTrigger.body, "function () { const x = 20; }");
 
             // read trigger
-            const { result: triggerAfterReplace } = await container.triggers.get(replacedTrigger.id).read();
+            const { result: triggerAfterReplace } = await container.trigger(replacedTrigger.id).read();
             assert.equal(replacedTrigger.id, triggerAfterReplace.id);
 
             // delete trigger
-            await await container.triggers.get(replacedTrigger.id).delete();
+            await await container.trigger(replacedTrigger.id).delete();
 
             // read triggers after deletion
             try {
-                await container.triggers.get(replacedTrigger.id).read();
+                await container.trigger(replacedTrigger.id).read();
                 assert.fail("Must fail to read after deletion");
             } catch (err) {
                 assert.equal(err.code, notFoundErrorCode, "response should return error code 404");
@@ -160,15 +158,15 @@ describe("NodeJS CRUD Tests", function () {
             assert.equal(replacedTrigger.body, "function () { const x = 20; }");
 
             // read trigger
-            const { result: triggerAfterReplace } = await container.triggers.get(replacedTrigger.id).read();
+            const { result: triggerAfterReplace } = await container.trigger(replacedTrigger.id).read();
             assert.equal(replacedTrigger.id, triggerAfterReplace.id);
 
             // delete trigger
-            await await container.triggers.get(replacedTrigger.id).delete();
+            await await container.trigger(replacedTrigger.id).delete();
 
             // read triggers after deletion
             try {
-                await container.triggers.get(replacedTrigger.id).read();
+                await container.trigger(replacedTrigger.id).read();
                 assert.fail("Must fail to read after deletion");
             } catch (err) {
                 assert.equal(err.code, notFoundErrorCode, "response should return error code 404");
@@ -238,15 +236,15 @@ describe("NodeJS CRUD Tests", function () {
                 await container.triggers.create(trigger);
             }
             // create document
-            const { result: document } = await container.items.create({ id: "doc1", key: "value" }, { preTriggerInclude: "t1" });
+            const { body: document } = await container.items.create({ id: "doc1", key: "value" }, { preTriggerInclude: "t1" });
             assert.equal(document.id, "DOC1t1", "name should be capitalized");
-            const { result: document2 } = await container.items.create({ id: "doc2", key2: "value2" }, { preTriggerInclude: "t2" });
+            const { body: document2 } = await container.items.create({ id: "doc2", key2: "value2" }, { preTriggerInclude: "t2" });
             assert.equal(document2.id, "doc2", "name shouldn't change");
-            const { result: document3 } = await container.items.create({ id: "Doc3", prop: "empty" }, { preTriggerInclude: "t3" });
+            const { body: document3 } = await container.items.create({ id: "Doc3", prop: "empty" }, { preTriggerInclude: "t3" });
             assert.equal(document3.id, "doc3t3");
-            const { result: document4 } = await container.items.create({ id: "testing post trigger" }, { postTriggerInclude: "response1", preTriggerInclude: "t1" });
+            const { body: document4 } = await container.items.create({ id: "testing post trigger" }, { postTriggerInclude: "response1", preTriggerInclude: "t1" });
             assert.equal(document4.id, "TESTING POST TRIGGERt1");
-            const { result: document5, headers } = await container.items.create({ id: "responseheaders" }, { preTriggerInclude: "t1" });
+            const { body: document5, headers } = await container.items.create({ id: "responseheaders" }, { preTriggerInclude: "t1" });
             assert.equal(document5.id, "RESPONSEHEADERSt1");
             try {
                 await container.items.create({ id: "Docoptype" }, { postTriggerInclude: "triggerOpType" });
@@ -261,15 +259,15 @@ describe("NodeJS CRUD Tests", function () {
                 await container.triggers.upsert(trigger);
             }
             // create document
-            const { result: document } = await container.items.upsert({ id: "doc1", key: "value" }, { preTriggerInclude: "t1" });
+            const { body: document } = await container.items.upsert({ id: "doc1", key: "value" }, { preTriggerInclude: "t1" });
             assert.equal(document.id, "DOC1t1", "name should be capitalized");
-            const { result: document2 } = await container.items.upsert({ id: "doc2", key2: "value2" }, { preTriggerInclude: "t2" });
+            const { body: document2 } = await container.items.upsert({ id: "doc2", key2: "value2" }, { preTriggerInclude: "t2" });
             assert.equal(document2.id, "doc2", "name shouldn't change");
-            const { result: document3 } = await container.items.upsert({ id: "Doc3", prop: "empty" }, { preTriggerInclude: "t3" });
+            const { body: document3 } = await container.items.upsert({ id: "Doc3", prop: "empty" }, { preTriggerInclude: "t3" });
             assert.equal(document3.id, "doc3t3");
-            const { result: document4 } = await container.items.upsert({ id: "testing post trigger" }, { postTriggerInclude: "response1", preTriggerInclude: "t1" });
+            const { body: document4 } = await container.items.upsert({ id: "testing post trigger" }, { postTriggerInclude: "response1", preTriggerInclude: "t1" });
             assert.equal(document4.id, "TESTING POST TRIGGERt1");
-            const { result: document5, headers } = await container.items.upsert({ id: "responseheaders" }, { preTriggerInclude: "t1" });
+            const { body: document5, headers } = await container.items.upsert({ id: "responseheaders" }, { preTriggerInclude: "t1" });
             assert.equal(document5.id, "RESPONSEHEADERSt1");
             try {
                 await container.items.upsert({ id: "Docoptype" }, { postTriggerInclude: "triggerOpType" });

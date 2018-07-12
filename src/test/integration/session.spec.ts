@@ -1,4 +1,4 @@
-﻿import * as assert from "assert";
+import * as assert from "assert";
 import * as sinon from "sinon";
 import { Base, Constants, CosmosClient, IHeaders } from "../../";
 import { ConsistencyLevel, PartitionKind } from "../../documents";
@@ -50,24 +50,23 @@ describe("Session Token", function () {
         }
     };
 
-    afterEach(async function () { await TestHelpers.removeAllDatabases(client); });
     beforeEach(async function () { await TestHelpers.removeAllDatabases(client); });
 
     it("validate session tokens for sequence of opearations", async function () {
         let index1;
         let index2;
 
-        const { result: databaseDef } = await client.databases.create(databaseBody);
-        const database = client.databases.get(databaseDef.id);
+        await client.databases.create(databaseBody);
+        const database = client.database(databaseId);
 
-        const { result: createdContainerDef } =
+        const { body: createdContainerDef } =
             await database.containers.create(containerDefinition, containerOptions);
-        const container = database.containers.get(createdContainerDef.id);
+        const container = database.container(createdContainerDef.id);
         assert.equal(postSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken], undefined);
         // TODO: testing implementation detail by looking at containerResourceIdToSesssionTokens
         assert.deepEqual(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens, {});
 
-        const { result: document1 } = await container.items.create({ id: "1" });
+        const { body: document1 } = await container.items.create({ id: "1" });
         assert.equal(postSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken], undefined);
 
         let tokens = getToken(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens);
@@ -75,7 +74,7 @@ describe("Session Token", function () {
         assert.notEqual(tokens[index1], undefined);
         let firstPartitionLSN = tokens[index1];
 
-        const { result: document2 } = await container.items.create({ id: "2" });
+        const { body: document2 } = await container.items.create({ id: "2" });
         assert.equal(postSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
 
@@ -85,14 +84,15 @@ describe("Session Token", function () {
         assert.notEqual(tokens[index2], undefined);
         let secondPartitionLSN = tokens[index2];
 
-        const { result: document12 } = await container.items.get(document1.id, "1").read();
+        await container.item(document1.id, "1").read();
+
         assert.equal(getSpy.lastCall.args[2][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
         tokens = getToken(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens);
         assert.equal(tokens[index1], firstPartitionLSN);
         assert.equal(tokens[index2], secondPartitionLSN);
 
-        const { result: document13 } =
+        const { body: document13 } =
             await container.items.upsert({ id: "1", operation: "upsert" }, { partitionKey: "1" });
         assert.equal(postSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
@@ -101,7 +101,8 @@ describe("Session Token", function () {
         assert.equal(tokens[index2], secondPartitionLSN);
         firstPartitionLSN = tokens[index1];
 
-        const { result: document22 } = await container.items.get(document2.id, "2").delete();
+        await container.item(document2.id, "2").delete();
+
         assert.equal(deleteSpy.lastCall.args[2][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
         tokens = getToken(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens);
@@ -109,9 +110,8 @@ describe("Session Token", function () {
         assert.equal(tokens[index2], (Number(secondPartitionLSN) + 1).toString());
         secondPartitionLSN = tokens[index2];
 
-        const { result: document14 } =
-            await container.items.get(document13.id)
-                .replace({ id: "1", operation: "replace" }, { partitionKey: "1" });
+        await container.item(document13.id)
+              .replace({ id: "1", operation: "replace" }, { partitionKey: "1" });
         assert.equal(putSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
         tokens = getToken(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens);
@@ -123,7 +123,7 @@ describe("Session Token", function () {
         const queryOptions = { partitionKey: "1" };
         const queryIterator = container.items.query(query, queryOptions);
 
-        const { result } = await queryIterator.toArray();
+        await queryIterator.toArray();
         assert.equal(postSpy.lastCall.args[3][Constants.HttpHeaders.SessionToken],
             client.documentClient.sessionContainer.getCombinedSessionToken(tokens));
         tokens = getToken(client.documentClient.sessionContainer.collectionResourceIdToSessionTokens);
@@ -142,8 +142,8 @@ describe("Session Token", function () {
     });
 
     it("validate 'lsn not caught up' error for higher lsn and clearing session token", async function () {
-        const { result: databaseDef } = await client.databases.create(databaseBody);
-        const database = client.databases.get(databaseDef.id);
+        const { body: databaseDef } = await client.databases.create(databaseBody);
+        const database = client.database(databaseDef.id);
         const increaseLSN = function (oldTokens: any) {
             for (const coll in oldTokens) {
                 if (oldTokens.hasOwnProperty(coll)) {
@@ -158,7 +158,7 @@ describe("Session Token", function () {
         };
 
         await database.containers.create(containerDefinition, containerOptions);
-        const container = database.containers.get(containerDefinition.id);
+        const container = database.container(containerDefinition.id);
         await container.items.create({ id: "1" });
         const callbackSpy = sinon.spy(function (pat: string, reqHeaders: IHeaders) {
             const oldTokens = client.documentClient.sessionContainer.collectionResourceIdToSessionTokens;
@@ -166,7 +166,7 @@ describe("Session Token", function () {
         });
         const applySessionTokenStub = sinon.stub(client.documentClient, "applySessionToken").callsFake(callbackSpy);
         try {
-            await container.items.get("1").read({ partitionKey: "1" });
+            await container.item("1").read({ partitionKey: "1" });
             assert.fail("readDocument must throw");
         } catch (err) {
             assert.equal(err.substatus, 1002, "Substatus should indicate the LSN didn't catchup.");
@@ -174,7 +174,7 @@ describe("Session Token", function () {
             assert.equal(Base._trimSlashes(callbackSpy.lastCall.args[0]), containerLink + "/docs/1");
             applySessionTokenStub.restore();
         }
-        await container.items.get("1").read({ partitionKey: "1" });
+        await container.item("1").read({ partitionKey: "1" });
     });
 
     // TODO: chrande - looks like this might be broken by going name based?
@@ -183,21 +183,21 @@ describe("Session Token", function () {
     it.skip("client should not have session token of a container created by another client", async function () {
         const client2 = new CosmosClient({ endpoint, auth: { masterKey }, consistencyLevel: ConsistencyLevel.Session });
 
-        const { result: databaseDef } = await client.databases.create(databaseBody);
-        const database = client.databases.get(databaseDef.id);
+        const { body: databaseDef } = await client.databases.create(databaseBody);
+        const database = client.database(databaseDef.id);
+
         await database.containers.create(containerDefinition, containerOptions);
-        const container = database.containers.get(containerDefinition.id);
+        const container = database.container(containerDefinition.id);
         await container.read();
-        await client2.databases.get(databaseDef.id)
-            .containers.get(containerDefinition.id)
+        await client2.database(databaseDef.id)
+            .container(containerDefinition.id)
             .delete();
 
-        const { result: createdCollection2 } =
-            await client2.databases.get(databaseDef.id)
+        await client2.database(databaseDef.id)
                 .containers.create(containerDefinition, containerOptions);
 
-        const { result: collection2 } = await client2.databases.get(databaseDef.id)
-            .containers.get(containerDefinition.id)
+        await client2.database(databaseDef.id)
+            .container(containerDefinition.id)
             .read();
         assert.equal(client.documentClient.getSessionToken(container.url), ""); // TODO: _self
         assert.notEqual(client2.documentClient.getSessionToken(container.url), "");
@@ -208,22 +208,23 @@ describe("Session Token", function () {
             const client2 = new CosmosClient({
                 endpoint, auth: { masterKey }, consistencyLevel: ConsistencyLevel.Session,
             });
-            const { result: databaseDef } = await client.databases.create(databaseBody);
-            const db = client.databases.get(databaseDef.id);
 
-            const { result: createdContainerDef } =
+            const { body: databaseDef } = await client.databases.create(databaseBody);
+            const db = client.database(databaseDef.id);
+
+            const { body: createdContainerDef } =
                 await db.containers.create(containerDefinition, containerOptions);
-            const createdContainer = db.containers.get(createdContainerDef.id);
+            const createdContainer = db.container(createdContainerDef.id);
 
-            const { result: createdDocument } = await createdContainer.items.create({ id: "1" });
+            const { body: createdDocument } = await createdContainer.items.create({ id: "1" });
             const requestOptions = { partitionKey: "1" };
-            await client2.databases.get(databaseDef.id)
-                .containers.get(createdContainerDef.id)
-                .items.get(createdDocument.id).delete(requestOptions);
+            await client2.database(databaseDef.id)
+                .container(createdContainerDef.id)
+                .item(createdDocument.id).delete(requestOptions);
             const setSessionTokenSpy = sinon.spy(client.documentClient.sessionContainer, "setSessionToken");
 
             try {
-                await createdContainer.items.get(createdDocument.id).read(requestOptions);
+                await createdContainer.item(createdDocument.id).read(requestOptions);
                 assert.fail("Must throw");
             } catch (err) {
                 assert.equal(err.code, 404, "expecting 404 (Not found)");
