@@ -15,7 +15,7 @@ const CosmosClient = cosmos.CosmosClient;
 const databaseId = 'UserStudy_TodoDB'
 const containerId = 'UserStudy_TodoContainer'
 
-/** TASK 1: CREATE A NEW DATABASE **/
+/* TASK 1: CREATE A NEW DATABASE **/
 
 // 1a. Establish a new instance of CosmosClient to be used in this setup
 const client = new CosmosClient({endpoint: endpoint, auth: { masterKey }});
