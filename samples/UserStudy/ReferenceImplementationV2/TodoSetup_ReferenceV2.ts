@@ -5,8 +5,8 @@ console.log('TODO SETUP');
 console.log('===================');
 console.log();
 
-import * as cosmos from '../../lib/';
-const config = require('../Shared/config');
+import * as cosmos from '../../../lib/';
+const config = require('../../Shared/config');
 
 const endpoint = config.connection.endpoint;
 const masterKey = config.connection.authKey;
@@ -24,8 +24,10 @@ const client = new CosmosClient({ endpoint: endpoint, auth: { masterKey } });
 
 async function setup() {
     try {
-        console.log('Database with uri of \'dbs/' + 'TODOIMPLEMENT' + '\' was created');
-        console.log('Container with id \'' + 'TODOIMPLEMENT' + ' was created');
+        const { database } = await client.databases.createIfNotExists({ id: databaseId });
+        const { container } = await database.containers.createIfNotExists({ id: containerId });
+        console.log('Database with uri of \'dbs/' + database.id + '\' was created');
+        console.log('Container with id \'' + container.id + ' was created');
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
@@ -39,7 +41,10 @@ async function setup() {
 
 async function addToDoItem(category: string, description: string) {
     try {
+        const container = client.database(databaseId).container(containerId);
         console.log("Adding task with category: " + category + " and description: " + description);
+        const item = { "category": category, "description": description };
+        container.items.create(item);
     } catch (error) {
         /** @type{cosmos.ErrorResponse} */
         const err: cosmos.ErrorResponse = error;
@@ -50,10 +55,15 @@ async function addToDoItem(category: string, description: string) {
 
 async function queryAllToDoItems() {
     try {
-
+        const container = client.database(databaseId).container(containerId);
+        const { result: items } = await container.items.readAll().toArray();
+        for (let item of items) {
+            console.log(item.category, item.description);
+        }
     } catch (error) {
         /** @type{cosmos.ErrorResponse} */
         const err: cosmos.ErrorResponse = error;
+
     }
 }
 
