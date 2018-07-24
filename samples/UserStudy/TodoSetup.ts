@@ -7,7 +7,7 @@ console.log();
 
 import * as cosmos from '../../lib/';
 const config = require('../Shared/config');
-  
+
 const endpoint = config.connection.endpoint;
 const masterKey = config.connection.authKey;
 
@@ -24,18 +24,18 @@ async function createDatabaseIfNotExists() {
     try {
         console.log('Database with uri of \'dbs/' + 'TODO_IMPLEMENT' + '\' was found');
     }
-    catch(error) {
+    catch (error) {
         /** @type{cosmos.ErrorResponse} */
         const err: cosmos.ErrorResponse = error;
     }
 }
 
-/** TASK 2: CREATE A NEW COLLECTION **/
+/** TASK 2: CREATE A NEW CONTAINER **/
 
 // 2a. TODO: Implement a function createContainerIfNotExists() to read a container to see if it exists, create a new one if it does not, and print its name
 async function createContainerIfNotExists() {
     try {
-        console.log('Container with id \'' + 'TODO_IMPLEMENT' + ' was found' );
+        console.log('Container with id \'' + 'TODO_IMPLEMENT' + ' was found');
     }
     catch (error) {
         /** @type{cosmos.ErrorResponse} */
@@ -48,7 +48,7 @@ function handleError(error: cosmos.ErrorResponse) {
     console.log('An error with code \'' + error.code + '\' has occurred:');
     console.log('\t' + JSON.parse(error.body).message);
     console.log();
-    
+
     finish();
 }
 
