@@ -87,21 +87,21 @@ const endpoint = "[hostendpoint]";                     // Add your endpoint
 const masterKey = "[database account masterkey]";  // Add the masterkey of the endpoint
 const client = new CosmosClient({endpoint, auth: { masterKey }});
 
-const databaseDefinition = { id: "sample database" };
-const collectionDefinition = { id: "sample collection" };
-const itemDefinition = { id: "hello world doc", content: "Hello World!" };
+const databaseDefinition = { id: "sample_database" };
+const containerDefinition = { id: "sample_container" };
+const itemDefinition = { id: "hello_world_doc", content: "Hello World!" };
 
 async function helloCosmos() {
-    const { database: db } = await client.database.create(databaseDefinition);
-    console.log('created db');
+    const { database } = await client.databases.create(databaseDefinition);
+    console.log('Created db');
 
-    const { container } = await db.container.create(collectionDefinition);
-    console.log('created collection');
+    const { container } = await database.containers.create(containerDefinition);
+    console.log('Created container');
 
-    const { body } = await container.items.create(documentDefinition);
-    console.log('Created item with content: ', body.content);
+    const { body: item } = await container.items.create(itemDefinition);
+    console.log('Created item with content: ', item.content);
 
-    await db.delete();
+    await database.delete();
     console.log("Deleted database");
 });
 
