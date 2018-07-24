@@ -1,253 +1,317 @@
 import * as assert from "assert";
+import { Container, CosmosClient, Database, DatabaseDefinition, Item, RequestOptions, Response } from "../../";
 import {
-    Container, CosmosClient,
-    Database, DatabaseDefinition, Item, RequestOptions, Response,
-} from "../../";
-import { ContainerDefinition, ItemResponse, PermissionDefinition, User, UserDefinition } from "../../client";
+  ContainerDefinition,
+  ItemResponse,
+  PermissionDefinition,
+  PermissionResponse,
+  TriggerResponse,
+  User,
+  UserDefinedFunctionResponse,
+  UserDefinition
+} from "../../client";
+import { StoredProcedureResponse } from "../../client/StoredProcedure/StoredProcedureResponse";
+import { UserResponse } from "../../client/User/UserResponse";
+import { endpoint, masterKey } from "./../common/_testConfig";
 
-/** @hidden */
-export class TestHelpers {
-    public static async removeAllDatabases(client: CosmosClient) {
-        try {
-            const { result: databases } = await client.databases.readAll().toArray();
-            const length = databases.length;
+const defaultClient = new CosmosClient({ endpoint, auth: { masterKey } });
 
-            if (length === 0) {
-                return;
-            }
+export async function removeAllDatabases(client: CosmosClient = defaultClient) {
+  try {
+    const { result: databases } = await client.databases.readAll().toArray();
+    const length = databases.length;
 
-            const count = 0;
-            await Promise.all(databases.map<Promise<Response<DatabaseDefinition>>>(
-                async (database: DatabaseDefinition) => client.database(database.id).delete()));
-        } catch (err) {
-            // TODO: remove console logging for errors and add ts-lint flag back
-            console.log("An error occured", err);
-            assert.fail(err);
-            throw err;
-        }
+    if (length === 0) {
+      return;
     }
 
-    public static async getTestDatabase(client: CosmosClient, testName: string) {
-        const entropy = Math.floor(Math.random() * 10000);
-        const id = `${testName.replace(" ", "").substring(0, 30)}${entropy}`;
-        await client.databases.create({ id });
-        return client.database(id);
-    }
+    const count = 0;
+    await Promise.all(
+      databases.map<Promise<Response<DatabaseDefinition>>>(async (database: DatabaseDefinition) =>
+        client.database(database.id).delete()
+      )
+    );
+  } catch (err) {
+    // TODO: remove console logging for errors and add ts-lint flag back
+    console.log("An error occured", err);
+    assert.fail(err);
+    throw err;
+  }
+}
 
-    public static async getTestContainer(
-        client: CosmosClient, testName: string, containerDef?: ContainerDefinition, options?: RequestOptions) {
-        const db = await TestHelpers.getTestDatabase(client, testName);
-        const entropy = Math.floor(Math.random() * 10000);
-        const id = `${testName.replace(" ", "").substring(0, 30)}${entropy}`;
-        await db.containers.create({ ...containerDef, ...{ id } }, options);
-        return db.container(id);
-    }
+export async function getTestDatabase(testName: string, client: CosmosClient = defaultClient) {
+  const entropy = Math.floor(Math.random() * 10000);
+  const id = `${testName.replace(" ", "").substring(0, 30)}${entropy}`;
+  await client.databases.create({ id });
+  return client.database(id);
+}
 
-    public static async bulkInsertItems(
-        container: Container, documents: any[]) {
-        const returnedDocuments = [];
-        for (const doc of documents) {
-            try {
-                const { body: document } = await container.items.create(doc);
-                returnedDocuments.push(document);
-            } catch (err) {
-                throw err;
-            }
-        }
-        return returnedDocuments;
-    }
+export async function getTestContainer(
+  testName: string,
+  client: CosmosClient = defaultClient,
+  containerDef?: ContainerDefinition,
+  options?: RequestOptions
+) {
+  const db = await getTestDatabase(testName, client);
+  const entropy = Math.floor(Math.random() * 10000);
+  const id = `${testName.replace(" ", "").substring(0, 30)}${entropy}`;
+  await db.containers.create({ ...containerDef, ...{ id } }, options);
+  return db.container(id);
+}
 
-    public static async bulkReadItems(
-        container: Container, documents: any[], partitionKey: string) {
-        for (const document of documents) {
-            try {
-                const options = (partitionKey && document.hasOwnProperty(partitionKey))
-                    ? { partitionKey: document[partitionKey] }
-                    : { partitionKey: {} };
-
-                // TODO: should we block or do all requests in parallel?
-                const { body: doc } = await container.item(document.id).read(options);
-
-                assert.equal(JSON.stringify(doc), JSON.stringify(document));
-            } catch (err) {
-                throw err;
-            }
-        }
+export async function bulkInsertItems(container: Container, documents: any[]) {
+  const returnedDocuments = [];
+  for (const doc of documents) {
+    try {
+      const { body: document } = await container.items.create(doc);
+      returnedDocuments.push(document);
+    } catch (err) {
+      throw err;
     }
+  }
+  return returnedDocuments;
+}
 
-    public static async bulkReplaceItems(
-        container: Container, documents: any[]): Promise<any[]> {
-        const returnedDocuments: any[] = [];
-        for (const document of documents) {
-            try {
-                const { body: doc } = await container.item(document.id).replace(document);
-                const expectedModifiedDocument = JSON.parse(JSON.stringify(document));
-                delete expectedModifiedDocument._etag;
-                delete expectedModifiedDocument._ts;
-                const actualModifiedDocument = JSON.parse(JSON.stringify(doc));
-                delete actualModifiedDocument._etag;
-                delete actualModifiedDocument._ts;
-                assert.equal(JSON.stringify(actualModifiedDocument), JSON.stringify(expectedModifiedDocument));
-                returnedDocuments.push(doc);
-            } catch (err) {
-                throw err;
-            }
-        }
-        return returnedDocuments;
-    }
+export async function bulkReadItems(container: Container, documents: any[], partitionKey: string) {
+  for (const document of documents) {
+    try {
+      const options =
+        partitionKey && document.hasOwnProperty(partitionKey)
+          ? { partitionKey: document[partitionKey] }
+          : { partitionKey: {} };
 
-    public static async bulkDeleteItems(
-        container: Container, documents: any[], partitionKeyPropertyName: string): Promise<void> {
-        for (const document of documents) {
-            try {
-                const options = (partitionKeyPropertyName && document.hasOwnProperty(partitionKeyPropertyName))
-                    ? { partitionKey: document[partitionKeyPropertyName] }
-                    : { partitionKey: {} };
+      // TODO: should we block or do all requests in parallel?
+      const { body: doc } = await container.item(document.id).read(options);
 
-                await container.item(document.id).delete(options);
-            } catch (err) {
-                throw err;
-            }
-        }
+      assert.equal(JSON.stringify(doc), JSON.stringify(document));
+    } catch (err) {
+      throw err;
     }
+  }
+}
 
-    public static async bulkQueryItemsWithPartitionKey(
-        container: Container, documents: any[], partitionKeyPropertyName: any): Promise<void> {
-        for (const document of documents) {
-            try {
-                if (!document.hasOwnProperty(partitionKeyPropertyName)) {
-                    continue;
-                }
+export async function bulkReplaceItems(container: Container, documents: any[]): Promise<any[]> {
+  const returnedDocuments: any[] = [];
+  for (const document of documents) {
+    try {
+      const { body: doc } = await container.item(document.id).replace(document);
+      const expectedModifiedDocument = JSON.parse(JSON.stringify(document));
+      delete expectedModifiedDocument._etag;
+      delete expectedModifiedDocument._ts;
+      const actualModifiedDocument = JSON.parse(JSON.stringify(doc));
+      delete actualModifiedDocument._etag;
+      delete actualModifiedDocument._ts;
+      assert.equal(JSON.stringify(actualModifiedDocument), JSON.stringify(expectedModifiedDocument));
+      returnedDocuments.push(doc);
+    } catch (err) {
+      throw err;
+    }
+  }
+  return returnedDocuments;
+}
 
-                const querySpec = {
-                    query: "SELECT * FROM root r WHERE r." + partitionKeyPropertyName + "=@key",
-                    parameters: [
-                        {
-                            name: "@key",
-                            value: document[partitionKeyPropertyName],
-                        },
-                    ],
-                };
+export async function bulkDeleteItems(
+  container: Container,
+  documents: any[],
+  partitionKeyPropertyName: string
+): Promise<void> {
+  for (const document of documents) {
+    try {
+      const options =
+        partitionKeyPropertyName && document.hasOwnProperty(partitionKeyPropertyName)
+          ? { partitionKey: document[partitionKeyPropertyName] }
+          : { partitionKey: {} };
 
-                const { result: results } = await container.items.query(querySpec).toArray();
-                assert.equal(results.length, 1, "Expected exactly 1 document");
-                assert.equal(JSON.stringify(results[0]), JSON.stringify(document));
-            } catch (err) {
-                throw err;
-            }
-        }
+      await container.item(document.id).delete(options);
+    } catch (err) {
+      throw err;
     }
+  }
+}
 
-    // Item
-    public static async createOrUpsertItem(
-        container: Container, body: any, options: RequestOptions, isUpsertTest: boolean): Promise<ItemResponse<any>> {
-        if (isUpsertTest) {
-            return container.items.upsert(body, options);
-        } else {
-            return container.items.create(body, options);
-        }
-    }
+export async function bulkQueryItemsWithPartitionKey(
+  container: Container,
+  documents: any[],
+  partitionKeyPropertyName: any
+): Promise<void> {
+  for (const document of documents) {
+    try {
+      if (!document.hasOwnProperty(partitionKeyPropertyName)) {
+        continue;
+      }
 
-    public static async replaceOrUpsertItem(
-        container: Container, body: any, options: RequestOptions, isUpsertTest: boolean): Promise<ItemResponse<any>> {
-        if (isUpsertTest) {
-            return container.items.upsert(body, options);
-        } else {
-            return container.item(body.id).replace(body, options);
-        }
-    }
+      const querySpec = {
+        query: "SELECT * FROM root r WHERE r." + partitionKeyPropertyName + "=@key",
+        parameters: [
+          {
+            name: "@key",
+            value: document[partitionKeyPropertyName]
+          }
+        ]
+      };
 
-    // User
-    public static createOrUpsertUser(
-        database: Database, body: any, options: any,
-        isUpsertTest: boolean): Promise<Response<UserDefinition>> {
-        if (isUpsertTest) {
-            return database.users.upsert(body, options);
-        } else {
-            return database.users.create(body, options);
-        }
+      const { result: results } = await container.items.query(querySpec).toArray();
+      assert.equal(results.length, 1, "Expected exactly 1 document");
+      assert.equal(JSON.stringify(results[0]), JSON.stringify(document));
+    } catch (err) {
+      throw err;
     }
-    public static replaceOrUpsertUser(
-        database: Database, body: any,
-        options: any, isUpsertTest: boolean): Promise<Response<UserDefinition>> {
-        if (isUpsertTest) {
-            return database.users.upsert(body, options);
-        } else {
-            return database.user(body.id).replace(body, options);
-        }
-    }
+  }
+}
 
-    // Permission
-    public static createOrUpsertPermission(
-        user: User, body: any, options: any, isUpsertTest: boolean): Promise<Response<PermissionDefinition>> {
-        if (isUpsertTest) {
-            return user.permissions.upsert(body, options);
-        } else {
-            return user.permissions.create(body, options);
-        }
-    }
+// Item
+export async function createOrUpsertItem(
+  container: Container,
+  body: any,
+  options: RequestOptions,
+  isUpsertTest: boolean
+): Promise<ItemResponse<any>> {
+  if (isUpsertTest) {
+    return container.items.upsert(body, options);
+  } else {
+    return container.items.create(body, options);
+  }
+}
 
-    public static replaceOrUpsertPermission(
-        user: User, body: any,
-        options: any, isUpsertTest: boolean): Promise<Response<PermissionDefinition>> {
-        if (isUpsertTest) {
-            return user.permissions.upsert(body, options);
-        } else {
-            return user.permission(body.id).replace(body, options);
-        }
-    }
+export async function replaceOrUpsertItem(
+  container: Container,
+  body: any,
+  options: RequestOptions,
+  isUpsertTest: boolean
+): Promise<ItemResponse<any>> {
+  if (isUpsertTest) {
+    return container.items.upsert(body, options);
+  } else {
+    return container.item(body.id).replace(body, options);
+  }
+}
 
-    // Trigger
-    public static createOrUpsertTrigger(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.triggers.upsert(body, options);
-        } else {
-            return container.triggers.create(body, options);
-        }
-    }
-    public static replaceOrUpsertTrigger(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.triggers.upsert(body, options);
-        } else {
-            return container.trigger(body.id).replace(body, options);
-        }
-    }
+// User
+export function createOrUpsertUser(
+  database: Database,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<UserResponse> {
+  if (isUpsertTest) {
+    return database.users.upsert(body, options);
+  } else {
+    return database.users.create(body, options);
+  }
+}
+export function replaceOrUpsertUser(
+  database: Database,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<UserResponse> {
+  if (isUpsertTest) {
+    return database.users.upsert(body, options);
+  } else {
+    return database.user(body.id).replace(body, options);
+  }
+}
 
-    // User Defined Function
-    public static createOrUpsertUserDefinedFunction(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.userDefinedFunctions.upsert(body, options);
-        } else {
-            return container.userDefinedFunctions.create(body, options);
-        }
-    }
-    public static replaceOrUpsertUserDefinedFunction(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.userDefinedFunctions.upsert(body, options);
-        } else {
-            return container.userDefinedFunction(body.id).replace(body, options);
-        }
-    }
+export function createOrUpsertPermission(
+  user: User,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<PermissionResponse> {
+  if (isUpsertTest) {
+    return user.permissions.upsert(body, options);
+  } else {
+    return user.permissions.create(body, options);
+  }
+}
 
-    // Stored Procedure
-    public static createOrUpsertStoredProcedure(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.storedProcedures.upsert(body, options);
-        } else {
-            return container.storedProcedures.create(body, options);
-        }
-    }
-    public static replaceOrUpsertStoredProcedure(
-        container: Container, body: any, options: any, isUpsertTest: boolean): Promise<Response<any>> {
-        if (isUpsertTest) {
-            return container.storedProcedures.upsert(body, options);
-        } else {
-            return container.storedProcedure(body.id).replace(body, options);
-        }
-    }
+export function replaceOrUpsertPermission(
+  user: User,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<PermissionResponse> {
+  if (isUpsertTest) {
+    return user.permissions.upsert(body, options);
+  } else {
+    return user.permission(body.id).replace(body, options);
+  }
+}
+
+// Trigger
+export function createOrUpsertTrigger(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<TriggerResponse> {
+  if (isUpsertTest) {
+    return container.triggers.upsert(body, options);
+  } else {
+    return container.triggers.create(body, options);
+  }
+}
+export function replaceOrUpsertTrigger(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<TriggerResponse> {
+  if (isUpsertTest) {
+    return container.triggers.upsert(body, options);
+  } else {
+    return container.trigger(body.id).replace(body, options);
+  }
+}
+
+// User Defined Function
+export function createOrUpsertUserDefinedFunction(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<UserDefinedFunctionResponse> {
+  if (isUpsertTest) {
+    return container.userDefinedFunctions.upsert(body, options);
+  } else {
+    return container.userDefinedFunctions.create(body, options);
+  }
+}
+export function replaceOrUpsertUserDefinedFunction(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<UserDefinedFunctionResponse> {
+  if (isUpsertTest) {
+    return container.userDefinedFunctions.upsert(body, options);
+  } else {
+    return container.userDefinedFunction(body.id).replace(body, options);
+  }
+}
+
+// Stored Procedure
+export function createOrUpsertStoredProcedure(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<StoredProcedureResponse> {
+  if (isUpsertTest) {
+    return container.storedProcedures.upsert(body, options);
+  } else {
+    return container.storedProcedures.create(body, options);
+  }
+}
+export function replaceOrUpsertStoredProcedure(
+  container: Container,
+  body: any,
+  options: any,
+  isUpsertTest: boolean
+): Promise<StoredProcedureResponse> {
+  if (isUpsertTest) {
+    return container.storedProcedures.upsert(body, options);
+  } else {
+    return container.storedProcedure(body.id).replace(body, options);
+  }
 }

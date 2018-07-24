@@ -1,3 +1,4 @@
 export interface ConflictDefinition {
-    id?: string;
+  /** The id of the conflict */
+  id?: string;
 }
